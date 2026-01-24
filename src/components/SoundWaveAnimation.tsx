@@ -1,5 +1,3 @@
-import { motion } from "framer-motion";
-
 interface SoundWaveAnimationProps {
   isActive: boolean;
   barCount?: number;
@@ -14,21 +12,14 @@ export const SoundWaveAnimation = ({
   if (!isActive) return null;
 
   return (
-    <div className={`flex items-center justify-center gap-0.5 ${className}`}>
+    <div className={`flex items-center justify-center gap-0.5 h-4 ${className}`}>
       {Array.from({ length: barCount }).map((_, i) => (
-        <motion.div
+        <div
           key={i}
-          className="w-0.5 bg-primary rounded-full"
-          initial={{ height: 4 }}
-          animate={{
-            height: [4, 16, 8, 20, 4],
-          }}
-          transition={{
-            duration: 0.8,
-            repeat: Infinity,
-            repeatType: "reverse",
-            ease: "easeInOut",
-            delay: i * 0.1,
+          className="soundwave-bar w-0.5 bg-primary rounded-full"
+          style={{ 
+            animationDelay: `${i * 0.1}s`,
+            height: '4px'
           }}
         />
       ))}
