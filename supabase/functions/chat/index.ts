@@ -23,6 +23,13 @@ serve(async (req) => {
       content: system_prompt || "You are Enma, a helpful AI assistant. You provide clear, accurate, and thoughtful responses. Use markdown formatting for code blocks and structured content.",
     };
 
+    // Determine which token parameter to use based on model
+    // OpenAI models (especially GPT-5+) require max_completion_tokens
+    const isOpenAIModel = model?.startsWith("openai/");
+    const tokenParam = isOpenAIModel 
+      ? { max_completion_tokens: max_tokens ?? 2048 }
+      : { max_tokens: max_tokens ?? 2048 };
+
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -34,7 +41,7 @@ serve(async (req) => {
         messages: [systemMessage, ...messages],
         temperature: temperature ?? 0.7,
         top_p: top_p ?? 0.9,
-        max_tokens: max_tokens ?? 2048,
+        ...tokenParam,
         stream: true,
       }),
     });
