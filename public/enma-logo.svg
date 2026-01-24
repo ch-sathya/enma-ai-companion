@@ -1,10 +1,40 @@
-<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <!-- Katana blade - elegant diagonal -->
-  <path d="M6 42 L38 10" stroke="white" stroke-width="2" stroke-linecap="round"/>
+<svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Blade gradient definitions -->
+  <defs>
+    <linearGradient id="bladeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#9B7ED9" />
+      <stop offset="50%" stop-color="#7B5DC3" />
+      <stop offset="100%" stop-color="#5A3DA8" />
+    </linearGradient>
+    <linearGradient id="goldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#DAA520" />
+      <stop offset="100%" stop-color="#B8860B" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main blade - purple -->
+  <path d="M56 8 L24 40" stroke="url(#bladeGradient)" stroke-width="4" stroke-linecap="round"/>
+  
   <!-- Blade tip -->
-  <path d="M38 10 L42 6" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
-  <!-- Guard (tsuba) - small ellipse -->
-  <ellipse cx="36" cy="12" rx="3" ry="1" fill="white" transform="rotate(-45 36 12)"/>
-  <!-- Handle (tsuka) -->
-  <path d="M6 42 L3 45" stroke="white" stroke-width="3" stroke-linecap="round"/>
+  <path d="M56 8 L60 4" stroke="#B8A0E8" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Hamon (wave pattern) -->
+  <path d="M52 12 Q50 14, 48 12 Q46 10, 44 12 Q42 14, 40 12 Q38 10, 36 12 Q34 14, 32 12 Q30 10, 28 12" stroke="rgba(255,255,255,0.4)" stroke-width="1" fill="none" stroke-linecap="round"/>
+  
+  <!-- Black habaki section -->
+  <rect x="22" y="38" width="4" height="3" fill="#1a1a1a" rx="0.5" transform="rotate(-45 24 39.5)"/>
+  
+  <!-- Gold tsuba (guard) -->
+  <circle cx="20" cy="44" r="5" fill="url(#goldGradient)" />
+  <circle cx="20" cy="44" r="3.5" fill="none" stroke="#C5941A" stroke-width="0.5" />
+  <circle cx="20" cy="44" r="1.5" fill="#1a1a1a" />
+  
+  <!-- Purple tsuka (handle) -->
+  <path d="M18 46 L8 56" stroke="#6B3FA0" stroke-width="5" stroke-linecap="round"/>
+  
+  <!-- Ito wrap pattern -->
+  <path d="M17 47 L15 49 M15 49 L13 51 M13 51 L11 53 M11 53 L9 55" stroke="#4A2080" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Red kashira (pommel) -->
+  <circle cx="6" cy="58" r="2.5" fill="#8B2252" />
 </svg>
