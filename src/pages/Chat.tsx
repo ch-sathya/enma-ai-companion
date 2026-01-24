@@ -10,9 +10,7 @@ import { ConversationSidebar } from "@/components/ConversationSidebar";
 import { AuthModal } from "@/components/AuthModal";
 import { SettingsPopup } from "@/components/SettingsPopup";
 import { EnmaLogo } from "@/components/EnmaLogo";
-import { GlassCard } from "@/components/GlassCard";
 
-import { VoicePreviewCard } from "@/components/VoicePreviewCard";
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -20,7 +18,7 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useVoice } from "@/hooks/useVoice";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { getPersonaById, Persona } from "@/data/personas";
-import { Sparkles, Settings } from "lucide-react";
+import { Settings } from "lucide-react";
 import { MessageSkeleton } from "@/components/MessageSkeleton";
 import { AttachedFile } from "@/components/FileAttachment";
 
@@ -377,48 +375,6 @@ export const Chat = () => {
                   How can I help you today?
                 </p>
 
-                <VoicePreviewCard
-                  enabled={preferences.voice_enabled && voice.isTTSSupported}
-                  isSpeaking={voice.isSpeaking}
-                  onPlay={() =>
-                    voice.speak(
-                      preferences.display_name
-                        ? `Hello ${preferences.display_name}. I'm Enma. How can I help you today?`
-                        : "Hello. I'm Enma. How can I help you today?"
-                    )
-                  }
-                  onStop={voice.stopSpeaking}
-                />
-
-                {/* Quick prompts */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
-                  {[
-                    "Explain quantum computing",
-                    "Write a Python function",
-                    "Help me brainstorm ideas",
-                    "What can you help me with?",
-                  ].map((prompt, index) => (
-                    <motion.button
-                      key={prompt}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 + index * 0.08 }}
-                      onClick={() => handleSendMessage(prompt)}
-                      className="text-left"
-                    >
-                      <GlassCard
-                        variant="subtle"
-                        glow
-                        className="p-4 prompt-card cursor-pointer"
-                      >
-                        <div className="flex items-center gap-2">
-                          <Sparkles size={14} className="text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">{prompt}</span>
-                        </div>
-                      </GlassCard>
-                    </motion.button>
-                  ))}
-                </div>
               </motion.div>
             </div>
           ) : (
