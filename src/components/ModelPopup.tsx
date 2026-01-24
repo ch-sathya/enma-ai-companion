@@ -9,11 +9,15 @@ interface Model {
 }
 
 const MODELS: Model[] = [
-  { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash", description: "Fast & balanced" },
-  { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", description: "Quick responses" },
-  { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro", description: "Advanced reasoning" },
-  { id: "openai/gpt-5-mini", name: "GPT-5 Mini", description: "Efficient & capable" },
-  { id: "openai/gpt-5", name: "GPT-5", description: "Maximum capability" },
+  { id: "google/gemini-3-flash-preview", name: "Gemini 3 Flash", description: "Fast & balanced (Free)" },
+  { id: "google/gemini-3-pro-preview", name: "Gemini 3 Pro", description: "Next-gen reasoning (Free)" },
+  { id: "google/gemini-2.5-flash", name: "Gemini 2.5 Flash", description: "Quick responses (Free)" },
+  { id: "google/gemini-2.5-flash-lite", name: "Gemini 2.5 Lite", description: "Fastest & cheapest (Free)" },
+  { id: "google/gemini-2.5-pro", name: "Gemini 2.5 Pro", description: "Advanced reasoning (Free)" },
+  { id: "openai/gpt-5-nano", name: "GPT-5 Nano", description: "Speed optimized (Free)" },
+  { id: "openai/gpt-5-mini", name: "GPT-5 Mini", description: "Efficient & capable (Free)" },
+  { id: "openai/gpt-5", name: "GPT-5", description: "Maximum capability (Free)" },
+  { id: "openai/gpt-5.2", name: "GPT-5.2", description: "Latest & enhanced (Free)" },
 ];
 
 interface ModelPopupProps {
@@ -44,11 +48,11 @@ export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: Mo
 
           {/* Popup */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-2rem)] max-w-sm"
+            className="fixed left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-3rem)] max-w-sm"
           >
             <GlassCard variant="strong" chromium className="p-4 max-h-[80vh] flex flex-col">
               {/* Header */}

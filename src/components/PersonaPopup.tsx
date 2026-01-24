@@ -31,11 +31,11 @@ export const PersonaPopup = ({ isOpen, onClose, selectedPersonaId, onSelectPerso
 
           {/* Popup */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-2rem)] max-w-md"
+            className="fixed left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-3rem)] max-w-md"
           >
             <GlassCard variant="strong" chromium className="p-4 max-h-[70vh] flex flex-col">
               {/* Header */}
