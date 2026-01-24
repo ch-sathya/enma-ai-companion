@@ -40,7 +40,7 @@ export const ChatMessage = ({ role, content, isStreaming, onRegenerate, onEdit }
         <img
           src="/enma-avatar.webp"
           alt="Enma"
-          className="flex-shrink-0 w-8 h-8 rounded-full object-contain bg-white/5"
+          className="flex-shrink-0 w-8 h-8 rounded-full object-contain bg-white p-1"
         />
       )}
 
