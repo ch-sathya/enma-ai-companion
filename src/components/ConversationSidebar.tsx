@@ -145,10 +145,10 @@ export const ConversationSidebar = ({
             ) : (
               <button
                 onClick={onLogin}
-                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-foreground border border-white/10 transition-all hover:scale-[1.02]"
               >
-                <User size={16} />
-                <span>Sign in to save chats</span>
+                <User size={18} />
+                <span className="font-medium">Sign in to save chats</span>
               </button>
             )}
           </div>
