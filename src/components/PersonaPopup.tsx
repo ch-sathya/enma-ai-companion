@@ -50,7 +50,7 @@ export const PersonaPopup = ({ isOpen, onClose, selectedPersonaId, onSelectPerso
               </div>
 
               {/* Persona grid - scrollable */}
-              <div className="overflow-y-auto flex-1 pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+              <div className="overflow-y-auto flex-1 min-h-0 pr-1" style={{ maxHeight: '50vh' }}>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   {PERSONAS.map((persona) => {
                     const Icon = persona.icon;

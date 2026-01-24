@@ -66,7 +66,7 @@ export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: Mo
               </div>
 
               {/* Model list - scrollable */}
-              <div className="overflow-y-auto flex-1 pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+              <div className="overflow-y-auto flex-1 min-h-0 pr-1" style={{ maxHeight: '50vh' }}>
                 <div className="space-y-2">
                   {MODELS.map((model) => (
                     <button
