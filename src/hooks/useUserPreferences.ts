@@ -66,16 +66,19 @@ export const useUserPreferences = (user: User | null) => {
       setPreferences(newPreferences);
 
       if (user) {
-        // Save to database for authenticated users
+        // Save to database for authenticated users (upsert in case profile row doesn't exist yet)
         await supabase
           .from("profiles")
-          .update({
-            display_name: newPreferences.display_name,
-            voice_enabled: newPreferences.voice_enabled,
-            wake_word_enabled: newPreferences.wake_word_enabled,
-            preferred_voice: newPreferences.preferred_voice,
-          })
-          .eq("user_id", user.id);
+          .upsert(
+            {
+              user_id: user.id,
+              display_name: newPreferences.display_name,
+              voice_enabled: newPreferences.voice_enabled,
+              wake_word_enabled: newPreferences.wake_word_enabled,
+              preferred_voice: newPreferences.preferred_voice,
+            },
+            { onConflict: "user_id" }
+          );
       } else {
         // Save to localStorage for guests
         localStorage.setItem(GUEST_PREFERENCES_KEY, JSON.stringify(newPreferences));
