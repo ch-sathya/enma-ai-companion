@@ -76,7 +76,8 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
   const retryCountRef = useRef(0);
-  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const shouldBeListeningRef = useRef(false);
   const MAX_RETRIES = 3;
 
   // Check for Speech Recognition support
@@ -130,6 +131,9 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
     recognition.lang = "en-US";
 
     recognition.onresult = (event: SpeechRecognitionEvent) => {
+      // If we got results, the session is alive; reset retry counter
+      retryCountRef.current = 0;
+
       let finalTranscript = "";
       let interimTranscript = "";
 
@@ -169,50 +173,66 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
       if (event.error === "not-allowed") {
         setHasPermission(false);
         setIsListening(false);
+        shouldBeListeningRef.current = false;
         toast.error("Microphone access denied. Please allow microphone access.");
         return;
       }
 
       // Retry on network errors with exponential backoff
-      if (event.error === "network" && retryCountRef.current < MAX_RETRIES) {
-        const delay = Math.pow(2, retryCountRef.current) * 1000;
-        retryCountRef.current++;
-        
-        console.log(`Retrying speech recognition in ${delay}ms (attempt ${retryCountRef.current}/${MAX_RETRIES})`);
-        
-        retryTimeoutRef.current = setTimeout(() => {
-          if (recognitionRef.current) {
+      if (event.error === "network" && shouldBeListeningRef.current) {
+        if (retryCountRef.current < MAX_RETRIES) {
+          const delay = Math.pow(2, retryCountRef.current) * 1000;
+          retryCountRef.current++;
+
+          console.log(
+            `Retrying speech recognition in ${delay}ms (attempt ${retryCountRef.current}/${MAX_RETRIES})`
+          );
+
+          // Abort current session before restarting
+          try {
+            recognition.abort();
+          } catch {
+            // ignore
+          }
+
+          if (retryTimeoutRef.current) {
+            clearTimeout(retryTimeoutRef.current);
+          }
+
+          retryTimeoutRef.current = setTimeout(() => {
+            if (!recognitionRef.current || !shouldBeListeningRef.current) return;
             try {
               recognitionRef.current.start();
+              setIsListening(true);
             } catch {
-              // Already running or other error
+              // ignore
             }
-          }
-        }, delay);
-        return;
-      }
+          }, delay);
+          return;
+        }
 
-      if (event.error === "network") {
-        toast.error("Speech recognition unavailable. Please check your connection.");
+        toast.error(
+          "Voice input is unavailable in this browser/network. Try Chrome or a different connection."
+        );
       }
 
       setIsListening(false);
+      shouldBeListeningRef.current = false;
     };
 
     recognition.onend = () => {
-      // Reset retry count on successful recognition session
-      retryCountRef.current = 0;
-      
       // Restart if in wake word mode or still supposed to be listening
-      if (isWakeWordMode && wakeWordEnabled) {
+      if (shouldBeListeningRef.current) {
         try {
           recognition.start();
+          setIsListening(true);
+          return;
         } catch {
-          // Already running
+          // ignore
         }
-      } else {
-        setIsListening(false);
       }
+
+      setIsListening(false);
     };
 
     recognitionRef.current = recognition;
@@ -228,8 +248,9 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
     const hasPermissionNow = hasPermission ?? (await requestPermission());
     if (!hasPermissionNow) return;
 
-    // Reset retry count
+    // Reset retry count & set desired listening state
     retryCountRef.current = 0;
+    shouldBeListeningRef.current = true;
 
     initRecognition();
     if (recognitionRef.current) {
@@ -240,6 +261,7 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
       } catch (error) {
         console.error("Failed to start recognition:", error);
         toast.error("Failed to start voice recognition.");
+        shouldBeListeningRef.current = false;
       }
     }
   }, [isSupported, hasPermission, requestPermission, initRecognition]);
@@ -252,6 +274,7 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
       retryTimeoutRef.current = null;
     }
     retryCountRef.current = 0;
+    shouldBeListeningRef.current = false;
 
     if (recognitionRef.current) {
       recognitionRef.current.stop();

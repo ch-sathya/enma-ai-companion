@@ -12,6 +12,7 @@ import { SettingsPopup } from "@/components/SettingsPopup";
 import { EnmaLogo } from "@/components/EnmaLogo";
 import { GlassCard } from "@/components/GlassCard";
 import { VoiceButton } from "@/components/VoiceButton";
+import { VoicePreviewCard } from "@/components/VoicePreviewCard";
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -107,15 +108,59 @@ export const Chat = () => {
   const { messages, isLoading, sendMessage, stopGeneration, loadMessages, clearMessages } =
     useChat(currentConversationId, chatSettings);
 
+  const handleSendMessageInternal = useCallback(
+    async (content: string, attachments?: AttachedFile[]) => {
+      let convId = currentConversationId;
+
+      // Create new conversation if none exists
+      if (!convId) {
+        const newConv = await createConversation(settings.model);
+        if (newConv) {
+          convId = newConv.id;
+        }
+      }
+
+      if (convId) {
+        // Reset last spoken to allow new response to be spoken
+        lastSpokenRef.current = "";
+        await sendMessage(content, convId, attachments);
+
+        // Update title after first message
+        if (messages.length === 0) {
+          const title = content.slice(0, 50) + (content.length > 50 ? "..." : "");
+          updateConversationTitle(convId, title);
+        }
+      }
+    },
+    [
+      currentConversationId,
+      createConversation,
+      settings.model,
+      sendMessage,
+      messages.length,
+      updateConversationTitle,
+    ]
+  );
+
+  const handleSendMessage = useCallback(
+    (content: string, attachments?: AttachedFile[]) => {
+      void handleSendMessageInternal(content, attachments);
+    },
+    [handleSendMessageInternal]
+  );
+
   // Voice handling
-  const handleVoiceTranscript = useCallback((text: string) => {
-    if (text.trim()) {
-      handleSendMessageInternal(text);
-    }
-  }, []);
+  const handleVoiceTranscript = useCallback(
+    (text: string) => {
+      if (text.trim()) {
+        void handleSendMessageInternal(text);
+      }
+    },
+    [handleSendMessageInternal]
+  );
 
   const handleWakeWord = useCallback(() => {
-    // Wake word detected - you could add a sound or visual feedback here
+    // Wake word detected - visual feedback could be added here
     console.log("Wake word detected!");
   }, []);
 
@@ -126,6 +171,46 @@ export const Chat = () => {
     voiceEnabled: preferences.voice_enabled,
     preferredVoice: preferences.preferred_voice,
   });
+
+  // Auto-start/stop wake word listening when enabled (only after mic permission)
+  const {
+    startWakeWordDetection,
+    stopWakeWordDetection,
+    toggleListening,
+    hasPermission,
+    isListening,
+  } = voice;
+  useEffect(() => {
+    if (preferences.wake_word_enabled && hasPermission === true) {
+      void startWakeWordDetection();
+    } else {
+      stopWakeWordDetection();
+    }
+    return () => stopWakeWordDetection();
+  }, [
+    preferences.wake_word_enabled,
+    hasPermission,
+    startWakeWordDetection,
+    stopWakeWordDetection,
+  ]);
+
+  const handleVoiceToggle = useCallback(() => {
+    // If wake word is enabled, mic button controls wake-word listening mode.
+    // This ensures a user gesture kicks off permissions in stricter browsers.
+    if (preferences.wake_word_enabled) {
+      if (isListening) stopWakeWordDetection();
+      else void startWakeWordDetection();
+      return;
+    }
+
+    toggleListening();
+  }, [
+    preferences.wake_word_enabled,
+    isListening,
+    startWakeWordDetection,
+    stopWakeWordDetection,
+    toggleListening,
+  ]);
 
   // Speak assistant responses
   useEffect(() => {
@@ -183,34 +268,6 @@ export const Chat = () => {
       messagesEndRef.current.scrollIntoView({ behavior: "smooth", block: "end" });
     }
   }, [messages]);
-
-  const handleSendMessageInternal = async (content: string, attachments?: AttachedFile[]) => {
-    let convId = currentConversationId;
-
-    // Create new conversation if none exists
-    if (!convId) {
-      const newConv = await createConversation(settings.model);
-      if (newConv) {
-        convId = newConv.id;
-      }
-    }
-
-    if (convId) {
-      // Reset last spoken to allow new response to be spoken
-      lastSpokenRef.current = "";
-      await sendMessage(content, convId, attachments);
-
-      // Update title after first message
-      if (messages.length === 0) {
-        const title = content.slice(0, 50) + (content.length > 50 ? "..." : "");
-        updateConversationTitle(convId, title);
-      }
-    }
-  };
-
-  const handleSendMessage = useCallback((content: string, attachments?: AttachedFile[]) => {
-    handleSendMessageInternal(content, attachments);
-  }, [currentConversationId, messages.length, settings.model]);
 
   const handleNewConversation = useCallback(() => {
     setCurrentConversationId(null);
@@ -320,6 +377,19 @@ export const Chat = () => {
                   How can I help you today?
                 </p>
 
+                <VoicePreviewCard
+                  enabled={preferences.voice_enabled && voice.isTTSSupported}
+                  isSpeaking={voice.isSpeaking}
+                  onPlay={() =>
+                    voice.speak(
+                      preferences.display_name
+                        ? `Hello ${preferences.display_name}. I'm Enma. How can I help you today?`
+                        : "Hello. I'm Enma. How can I help you today?"
+                    )
+                  }
+                  onStop={voice.stopSpeaking}
+                />
+
                 {/* Quick prompts */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
                   {[
@@ -383,7 +453,7 @@ export const Chat = () => {
               isListening={voice.isListening}
               isSpeaking={voice.isSpeaking}
               isSupported={voice.isSupported}
-              onToggle={voice.toggleListening}
+              onToggle={handleVoiceToggle}
               onStopSpeaking={voice.stopSpeaking}
               size="lg"
             />
