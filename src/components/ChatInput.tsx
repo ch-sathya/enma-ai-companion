@@ -39,6 +39,7 @@ interface ChatInputProps {
   onOpenPersonaPopup: () => void;
   // Voice props
   isListening?: boolean;
+  isConnecting?: boolean;
   isSpeaking?: boolean;
   isVoiceSupported?: boolean;
   onVoiceToggle?: () => void;
@@ -54,6 +55,7 @@ export const ChatInput = ({
   onOpenModelPopup,
   onOpenPersonaPopup,
   isListening = false,
+  isConnecting = false,
   isSpeaking = false,
   isVoiceSupported = false,
   onVoiceToggle,
@@ -313,16 +315,25 @@ export const ChatInput = ({
                 </AnimatePresence>
                 <button
                   onClick={isSpeaking ? onStopSpeaking : onVoiceToggle}
+                  disabled={isConnecting}
                   className={`p-2.5 rounded-lg transition-all ${
-                    isListening 
+                    isConnecting
+                      ? "bg-white/5 text-muted-foreground opacity-50 cursor-wait"
+                      : isListening 
                       ? "bg-primary/20 text-primary" 
                       : isSpeaking
                       ? "bg-accent/20 text-accent"
                       : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground"
                   }`}
-                  title={isListening ? "Stop listening" : isSpeaking ? "Stop speaking" : "Start voice input"}
+                  title={isConnecting ? "Connecting..." : isListening ? "Stop listening" : isSpeaking ? "Stop speaking" : "Start voice input"}
                 >
-                  {isSpeaking ? <MicOff size={18} /> : <Mic size={18} />}
+                  {isConnecting ? (
+                    <div className="w-[18px] h-[18px] border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  ) : isSpeaking ? (
+                    <MicOff size={18} />
+                  ) : (
+                    <Mic size={18} />
+                  )}
                 </button>
               </div>
             )}
