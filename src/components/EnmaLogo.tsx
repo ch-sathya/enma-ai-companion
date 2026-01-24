@@ -66,8 +66,8 @@ export const EnmaLogo = ({
 
   const className = cn(
     "flex items-center group",
-    vertical ? "flex-col gap-4" : "gap-2",
-    centered && "justify-center"
+    vertical ? "flex-col gap-2" : "gap-2",
+    centered && "justify-center mx-auto"
   );
 
   if (!asLink) {

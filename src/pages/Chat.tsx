@@ -336,11 +336,11 @@ export const Chat = () => {
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="text-center max-w-2xl"
+                className="flex flex-col items-center text-center max-w-2xl"
               >
                 <EnmaLogo size="lg" centered asLink={false} />
-                <p className="text-lg text-foreground mt-4">{greeting}</p>
-                <p className="text-muted-foreground mt-2 mb-6">
+                <p className="text-lg text-foreground mt-3">{greeting}</p>
+                <p className="text-muted-foreground mt-1 mb-6">
                   How can I help you today?
                 </p>
                 
