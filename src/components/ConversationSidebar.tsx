@@ -68,7 +68,7 @@ export const ConversationSidebar = ({
       >
         <GlassCard variant="strong" className="h-full rounded-none rounded-r-2xl flex flex-col">
           {/* Logo */}
-          <div className="px-4 py-4 border-b border-white/5 safe-top">
+          <div className="h-14 px-4 flex items-center border-b border-white/5 mt-safe">
             <EnmaLogo size="sm" showIcon={true} />
           </div>
 
