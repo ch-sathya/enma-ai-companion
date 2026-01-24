@@ -198,7 +198,7 @@ export const Chat = () => {
             </div>
           ) : (
             // Messages
-            <div className="max-w-4xl mx-auto px-4 py-8 space-y-6">
+            <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
               {messages.map((message, index) => (
                 <ChatMessage
                   key={message.id}
@@ -213,8 +213,8 @@ export const Chat = () => {
         </div>
 
         {/* Input area */}
-        <div className="p-4 pb-6 safe-bottom">
-          <div className="max-w-4xl mx-auto">
+        <div className="px-4 pb-6 safe-bottom">
+          <div className="max-w-3xl mx-auto">
             <ChatInput
               onSend={handleSendMessage}
               onStop={stopGeneration}

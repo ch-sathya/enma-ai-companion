@@ -50,7 +50,7 @@ export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: Mo
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-2rem)] max-w-sm"
           >
-            <GlassCard variant="strong" chromium className="p-4 max-h-[70vh] flex flex-col">
+            <GlassCard variant="strong" chromium className="p-4 max-h-[80vh] flex flex-col">
               {/* Header */}
               <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <div className="flex items-center gap-2">
@@ -66,26 +66,28 @@ export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: Mo
               </div>
 
               {/* Model list - scrollable */}
-              <div className="space-y-2 overflow-y-auto flex-1 pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
-                {MODELS.map((model) => (
-                  <button
-                    key={model.id}
-                    onClick={() => handleSelect(model.id)}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 hover:scale-[1.01] ${
-                      selectedModel === model.id
-                        ? "bg-white/10 border border-white/20"
-                        : "hover:bg-white/5 border border-transparent"
-                    }`}
-                  >
-                    <div className="text-left">
-                      <p className="text-sm font-medium text-foreground">{model.name}</p>
-                      <p className="text-xs text-muted-foreground">{model.description}</p>
-                    </div>
-                    {selectedModel === model.id && (
-                      <Check size={16} className="text-foreground flex-shrink-0" />
-                    )}
-                  </button>
-                ))}
+              <div className="overflow-y-auto flex-1 pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
+                <div className="space-y-2">
+                  {MODELS.map((model) => (
+                    <button
+                      key={model.id}
+                      onClick={() => handleSelect(model.id)}
+                      className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 hover:scale-[1.01] ${
+                        selectedModel === model.id
+                          ? "bg-white/10 border border-white/20"
+                          : "hover:bg-white/5 border border-transparent"
+                      }`}
+                    >
+                      <div className="text-left">
+                        <p className="text-sm font-medium text-foreground">{model.name}</p>
+                        <p className="text-xs text-muted-foreground">{model.description}</p>
+                      </div>
+                      {selectedModel === model.id && (
+                        <Check size={16} className="text-foreground flex-shrink-0" />
+                      )}
+                    </button>
+                  ))}
+                </div>
               </div>
             </GlassCard>
           </motion.div>

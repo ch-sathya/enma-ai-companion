@@ -65,9 +65,9 @@ export const ChatInput = ({
       animate={{ opacity: 1, y: 0 }}
       className="w-full"
     >
-      <GlassCard variant="strong" chromium className="p-2">
+      <GlassCard variant="strong" chromium className="p-3">
         {/* Selection chips */}
-        <div className="flex items-center gap-2 px-2 pb-2 border-b border-white/5 mb-2">
+        <div className="flex items-center gap-2 px-1 pb-2 border-b border-white/5 mb-2">
           <button
             onClick={onOpenModelPopup}
             className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all"
