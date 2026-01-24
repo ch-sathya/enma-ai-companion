@@ -15,7 +15,7 @@ import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { useElevenLabsVoice } from "@/hooks/useElevenLabsVoice";
+import { useVoice } from "@/hooks/useVoice";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { getPersonaById, Persona } from "@/data/personas";
 import { Settings } from "lucide-react";
@@ -159,7 +159,7 @@ export const Chat = () => {
     [handleSendMessageInternal]
   );
 
-  const voice = useElevenLabsVoice({
+  const voice = useVoice({
     onTranscript: handleVoiceTranscript,
     voiceEnabled: preferences.voice_enabled,
     preferredVoice: preferences.preferred_voice,
@@ -170,7 +170,7 @@ export const Chat = () => {
     toggleListening,
     hasPermission,
     isListening,
-    isConnecting,
+    isSupported,
   } = voice;
 
   const handleVoiceToggle = useCallback(() => {
@@ -387,7 +387,6 @@ export const Chat = () => {
               onOpenModelPopup={() => setModelPopupOpen(true)}
               onOpenPersonaPopup={() => setPersonaPopupOpen(true)}
               isListening={voice.isListening}
-              isConnecting={voice.isConnecting}
               isSpeaking={voice.isSpeaking}
               isVoiceSupported={voice.isSupported}
               onVoiceToggle={handleVoiceToggle}

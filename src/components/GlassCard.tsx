@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 import { HTMLAttributes, forwardRef } from "react";
 
 interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "strong" | "subtle";
+  variant?: "default" | "strong" | "subtle" | "clean";
   chromium?: boolean;
   glow?: boolean;
 }
@@ -13,6 +13,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
       default: "glass",
       strong: "glass-strong",
       subtle: "glass-subtle",
+      clean: "clean-border",
     };
 
     return (
