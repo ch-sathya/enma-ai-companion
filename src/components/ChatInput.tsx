@@ -4,6 +4,7 @@ import { Send, Square, Cpu, Paperclip, Upload, Mic, MicOff } from "lucide-react"
 import { GlassCard } from "./GlassCard";
 import { getPersonaById } from "@/data/personas";
 import { FileAttachment, AttachedFile } from "./FileAttachment";
+import { SoundWaveAnimation } from "./SoundWaveAnimation";
 import { toast } from "sonner";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -295,21 +296,35 @@ export const ChatInput = ({
               rows={1}
             />
 
-            {/* Voice button */}
+            {/* Voice button with sound wave animation */}
             {isVoiceSupported && onVoiceToggle && (
-              <button
-                onClick={isSpeaking ? onStopSpeaking : onVoiceToggle}
-                className={`p-2.5 rounded-lg transition-all ${
-                  isListening 
-                    ? "bg-primary/20 text-primary animate-pulse" 
-                    : isSpeaking
-                    ? "bg-accent/20 text-accent"
-                    : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground"
-                }`}
-                title={isListening ? "Stop listening" : isSpeaking ? "Stop speaking" : "Start voice input"}
-              >
-                {isSpeaking ? <MicOff size={18} /> : <Mic size={18} />}
-              </button>
+              <div className="flex items-center gap-1">
+                <AnimatePresence>
+                  {isListening && (
+                    <motion.div
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: "auto" }}
+                      exit={{ opacity: 0, width: 0 }}
+                      className="overflow-hidden"
+                    >
+                      <SoundWaveAnimation isActive={isListening} barCount={4} className="px-1" />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                <button
+                  onClick={isSpeaking ? onStopSpeaking : onVoiceToggle}
+                  className={`p-2.5 rounded-lg transition-all ${
+                    isListening 
+                      ? "bg-primary/20 text-primary" 
+                      : isSpeaking
+                      ? "bg-accent/20 text-accent"
+                      : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+                  }`}
+                  title={isListening ? "Stop listening" : isSpeaking ? "Stop speaking" : "Start voice input"}
+                >
+                  {isSpeaking ? <MicOff size={18} /> : <Mic size={18} />}
+                </button>
+              </div>
             )}
 
             {isLoading ? (

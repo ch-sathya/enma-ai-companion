@@ -328,7 +328,8 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
     stopListening();
   }, [stopListening]);
 
-  // Speak text using browser's built-in Speech Synthesis API (FREE)
+  // Speak text using browser's built-in Speech Synthesis API
+  // Use chunking for longer text to prevent synthesis errors
   const speak = useCallback(
     (text: string) => {
       if (!voiceEnabled || !text.trim() || !isTTSSupported) return;
@@ -338,33 +339,94 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
 
       setIsSpeaking(true);
 
-      const utterance = new SpeechSynthesisUtterance(text);
-      
-      // Find the preferred voice or use default
-      if (preferredVoice && availableVoices.length > 0) {
-        const voice = availableVoices.find(v => v.name === preferredVoice);
-        if (voice) {
-          utterance.voice = voice;
+      // Split text into smaller chunks for more natural, continuous speech
+      // Browsers have limits on utterance length which can cause errors
+      const chunkText = (text: string, maxLength = 150): string[] => {
+        const chunks: string[] = [];
+        const sentences = text.split(/(?<=[.!?])\s+/);
+        let currentChunk = "";
+
+        for (const sentence of sentences) {
+          if ((currentChunk + " " + sentence).length > maxLength && currentChunk) {
+            chunks.push(currentChunk.trim());
+            currentChunk = sentence;
+          } else {
+            currentChunk = currentChunk ? currentChunk + " " + sentence : sentence;
+          }
         }
-      } else if (availableVoices.length > 0) {
-        // Use first available English voice as default
-        utterance.voice = availableVoices[0];
-      }
-
-      utterance.rate = 1.0;
-      utterance.pitch = 1.0;
-      utterance.volume = 1.0;
-
-      utterance.onend = () => {
-        setIsSpeaking(false);
+        if (currentChunk.trim()) {
+          chunks.push(currentChunk.trim());
+        }
+        return chunks.length > 0 ? chunks : [text];
       };
 
-      utterance.onerror = (event) => {
-        console.error("Speech synthesis error:", event);
-        setIsSpeaking(false);
+      const chunks = chunkText(text);
+      let currentIndex = 0;
+
+      const speakChunk = () => {
+        if (currentIndex >= chunks.length) {
+          setIsSpeaking(false);
+          return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(chunks[currentIndex]);
+
+        // Find a high-quality voice
+        const getPreferredVoice = () => {
+          if (preferredVoice && availableVoices.length > 0) {
+            const found = availableVoices.find(v => v.name === preferredVoice);
+            if (found) return found;
+          }
+          
+          // Prefer natural/enhanced voices for better quality
+          const naturalVoice = availableVoices.find(v => 
+            v.name.toLowerCase().includes('natural') ||
+            v.name.toLowerCase().includes('enhanced') ||
+            v.name.toLowerCase().includes('premium')
+          );
+          if (naturalVoice) return naturalVoice;
+
+          // Prefer Google voices as they tend to be higher quality
+          const googleVoice = availableVoices.find(v => 
+            v.name.toLowerCase().includes('google')
+          );
+          if (googleVoice) return googleVoice;
+
+          return availableVoices[0] || null;
+        };
+
+        const selectedVoice = getPreferredVoice();
+        if (selectedVoice) {
+          utterance.voice = selectedVoice;
+        }
+
+        // Natural speech settings
+        utterance.rate = 0.95; // Slightly slower for more natural feel
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        utterance.onend = () => {
+          currentIndex++;
+          // Small pause between chunks for natural flow
+          if (currentIndex < chunks.length) {
+            setTimeout(speakChunk, 50);
+          } else {
+            setIsSpeaking(false);
+          }
+        };
+
+        utterance.onerror = (event) => {
+          // Only log actual errors, not interruptions
+          if (event.error !== 'interrupted' && event.error !== 'canceled') {
+            console.error("Speech synthesis error:", event.error);
+          }
+          setIsSpeaking(false);
+        };
+
+        window.speechSynthesis.speak(utterance);
       };
 
-      window.speechSynthesis.speak(utterance);
+      speakChunk();
     },
     [voiceEnabled, preferredVoice, availableVoices, isTTSSupported]
   );
