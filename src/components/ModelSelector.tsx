@@ -53,10 +53,10 @@ const iconMap = {
   sparkles: Sparkles,
 };
 
-const speedColors = {
-  fast: "text-green-400",
-  balanced: "text-yellow-400",
-  slow: "text-orange-400",
+const speedLabels = {
+  fast: "Fast",
+  balanced: "Balanced",
+  slow: "Thorough",
 };
 
 export const ModelSelector = ({ selectedModel, onSelectModel }: ModelSelectorProps) => {
@@ -75,16 +75,14 @@ export const ModelSelector = ({ selectedModel, onSelectModel }: ModelSelectorPro
           >
             <GlassCard
               variant={isSelected ? "strong" : "subtle"}
-              neon={isSelected}
-              glow={isSelected}
               className={`p-4 cursor-pointer transition-all duration-300 hover:bg-white/5 ${
-                isSelected ? "border-primary/50" : ""
+                isSelected ? "bg-white/10" : ""
               }`}
               onClick={() => onSelectModel(model.id)}
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <div className={`p-2 rounded-lg bg-white/5 ${isSelected ? "text-primary" : "text-muted-foreground"}`}>
+                  <div className={`p-2 rounded-lg bg-white/5 ${isSelected ? "text-foreground" : "text-muted-foreground"}`}>
                     <Icon size={20} />
                   </div>
                   <div>
@@ -96,15 +94,15 @@ export const ModelSelector = ({ selectedModel, onSelectModel }: ModelSelectorPro
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
-                    className="p-1 rounded-full bg-primary text-primary-foreground"
+                    className="p-1 rounded-full bg-foreground text-background"
                   >
                     <Check size={12} />
                   </motion.div>
                 )}
               </div>
               <div className="mt-3 flex items-center gap-2">
-                <span className={`text-xs ${speedColors[model.speed]}`}>
-                  {model.speed === "fast" ? "⚡ Fast" : model.speed === "balanced" ? "⚖️ Balanced" : "🧠 Thorough"}
+                <span className="text-xs text-muted-foreground">
+                  {speedLabels[model.speed]}
                 </span>
               </div>
             </GlassCard>

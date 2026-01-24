@@ -40,7 +40,7 @@ export const ConversationSidebar = ({
       {/* Mobile toggle */}
       <button
         onClick={onToggle}
-        className="fixed top-4 left-4 z-50 p-2 rounded-lg glass md:hidden"
+        className="fixed top-4 left-4 z-50 p-2 rounded-lg glass md:hidden safe-top"
       >
         {isOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
@@ -52,7 +52,7 @@ export const ConversationSidebar = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 z-30 md:hidden"
+            className="fixed inset-0 bg-black/70 z-30 md:hidden"
             onClick={onToggle}
           />
         )}
@@ -68,15 +68,15 @@ export const ConversationSidebar = ({
       >
         <GlassCard variant="strong" className="h-full rounded-none rounded-r-2xl flex flex-col">
           {/* Logo */}
-          <div className="p-6 border-b border-white/10">
-            <EnmaLogo size="sm" />
+          <div className="p-6 border-b border-white/5 safe-top">
+            <EnmaLogo size="sm" showIcon={false} />
           </div>
 
           {/* New chat button */}
           <div className="p-4">
             <button
               onClick={onNewConversation}
-              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-primary/10 hover:bg-primary/20 text-primary border border-primary/20 transition-all"
+              className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-foreground border border-white/10 transition-all"
             >
               <Plus size={18} />
               <span className="font-medium">New Chat</span>
@@ -99,7 +99,7 @@ export const ConversationSidebar = ({
                   <MessageSquare size={16} className="flex-shrink-0" />
                   <div className="flex-1 min-w-0">
                     <p className="text-sm truncate">{conv.title}</p>
-                    <p className="text-xs text-muted-foreground/60">
+                    <p className="text-xs text-muted-foreground/50">
                       {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}
                     </p>
                   </div>
@@ -116,7 +116,7 @@ export const ConversationSidebar = ({
               ))}
 
               {conversations.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground/60">
+                <div className="text-center py-8 text-muted-foreground/40">
                   <MessageSquare size={24} className="mx-auto mb-2 opacity-50" />
                   <p className="text-sm">No conversations yet</p>
                 </div>
@@ -125,10 +125,10 @@ export const ConversationSidebar = ({
           </div>
 
           {/* User section */}
-          <div className="p-4 border-t border-white/10">
+          <div className="p-4 border-t border-white/5 safe-bottom">
             {user ? (
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-primary">
+                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-foreground">
                   <User size={16} />
                 </div>
                 <div className="flex-1 min-w-0">
