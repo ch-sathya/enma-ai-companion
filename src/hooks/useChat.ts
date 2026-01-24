@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { AttachedFile } from "@/components/FileAttachment";
+import type { Json } from "@/integrations/supabase/types";
 
 interface Attachment {
   url: string;
@@ -57,16 +58,26 @@ export const useChat = (conversationId: string | null, settings: ChatSettings) =
     convId: string,
     attachments?: Attachment[]
   ) => {
+    const insertData: {
+      conversation_id: string;
+      role: string;
+      content: string;
+      attachments?: Json;
+    } = {
+      conversation_id: convId,
+      role,
+      content,
+    };
+
+    if (attachments && attachments.length > 0) {
+      insertData.attachments = attachments as unknown as Json;
+    }
+
     const { data, error } = await supabase
       .from("messages")
-      .insert({
-        conversation_id: convId,
-        role,
-        content,
-        attachments: (attachments || []) as unknown as Record<string, unknown>,
-      })
+      .insert(insertData)
       .select()
-      .single();
+      .maybeSingle();
 
     return data;
   };
