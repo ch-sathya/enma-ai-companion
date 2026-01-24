@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatMessage } from "@/components/ChatMessage";
@@ -10,6 +10,7 @@ import { ConversationSidebar } from "@/components/ConversationSidebar";
 import { AuthModal } from "@/components/AuthModal";
 import { SettingsPopup } from "@/components/SettingsPopup";
 import { EnmaLogo } from "@/components/EnmaLogo";
+import { SparkleEffect } from "@/components/SparkleEffect";
 
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
@@ -338,7 +339,10 @@ export const Chat = () => {
                 animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col items-center text-center max-w-2xl"
               >
-                <EnmaLogo size="lg" centered asLink={false} />
+                <div className="relative">
+                  <EnmaLogo size="lg" centered asLink={false} />
+                  <SparkleEffect isActive={isLoading} />
+                </div>
                 <p className="text-lg text-foreground mt-3">{greeting}</p>
                 <p className="text-muted-foreground mt-1 mb-6">
                   How can I help you today?
@@ -394,14 +398,23 @@ export const Chat = () => {
               </motion.div>
             </div>
           ) : (
-            // Messages
-            <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-              {messageElements}
-              {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
-                <MessageSkeleton />
-              )}
-              <div ref={messagesEndRef} />
-            </div>
+            // Messages with conversation transition
+            <AnimatePresence mode="wait">
+              <motion.div 
+                key={currentConversationId || 'default'}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.25, ease: "easeOut" }}
+                className="max-w-3xl mx-auto px-4 py-8 space-y-6"
+              >
+                {messageElements}
+                {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
+                  <MessageSkeleton />
+                )}
+                <div ref={messagesEndRef} />
+              </motion.div>
+            </AnimatePresence>
           )}
         </div>
 
