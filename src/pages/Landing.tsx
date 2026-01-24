@@ -40,9 +40,9 @@ export const Landing = () => {
         transition={{ duration: 0.8 }}
         className="text-center z-10 max-w-3xl mx-auto"
       >
-        {/* Logo */}
-        <div className="mb-12">
-          <EnmaLogo size="xl" />
+        {/* Logo - Centered */}
+        <div className="flex justify-center mb-12">
+          <EnmaLogo size="xl" centered asLink={false} />
         </div>
 
         {/* Tagline */}
