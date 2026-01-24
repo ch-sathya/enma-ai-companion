@@ -1,8 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Square, Cpu, Paperclip, Upload, Mic, MicOff } from "lucide-react";
+import { Send, Square, Paperclip, Upload, Mic, MicOff, Settings2 } from "lucide-react";
 import { GlassCard } from "./GlassCard";
-import { getPersonaById } from "@/data/personas";
 import { FileAttachment, AttachedFile } from "./FileAttachment";
 import { SoundWaveAnimation } from "./SoundWaveAnimation";
 import { toast } from "sonner";
@@ -39,7 +38,6 @@ interface ChatInputProps {
   onOpenPersonaPopup: () => void;
   // Voice props
   isListening?: boolean;
-  isConnecting?: boolean;
   isSpeaking?: boolean;
   isVoiceSupported?: boolean;
   onVoiceToggle?: () => void;
@@ -55,7 +53,6 @@ export const ChatInput = ({
   onOpenModelPopup,
   onOpenPersonaPopup,
   isListening = false,
-  isConnecting = false,
   isSpeaking = false,
   isVoiceSupported = false,
   onVoiceToggle,
@@ -68,15 +65,6 @@ export const ChatInput = ({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
-
-  const persona = getPersonaById(selectedPersonaId);
-  const PersonaIcon = persona.icon;
-
-  const getModelDisplayName = (modelId: string) => {
-    const parts = modelId.split('/');
-    const name = parts[parts.length - 1];
-    return name.replace(/-preview$/, '').replace('gemini-', 'G').replace('gpt-', 'GPT-');
-  };
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -121,13 +109,11 @@ export const ChatInput = ({
     const files = Array.from(e.target.files || []);
     await processFiles(files);
     
-    // Reset input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
   };
 
-  // Drag and drop handlers
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -137,8 +123,6 @@ export const ChatInput = ({
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    // Only set dragging to false if we're leaving the drop zone entirely
     const relatedTarget = e.relatedTarget as Node;
     if (!dropZoneRef.current?.contains(relatedTarget)) {
       setIsDragging(false);
@@ -161,7 +145,6 @@ export const ChatInput = ({
     }
   }, [processFiles]);
 
-  // Paste handler for images
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
@@ -231,10 +214,10 @@ export const ChatInput = ({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 z-10 rounded-2xl border-2 border-dashed border-primary bg-primary/10 backdrop-blur-sm flex items-center justify-center"
+              className="absolute inset-0 z-10 rounded-2xl border-2 border-dashed border-foreground/30 bg-background/80 backdrop-blur-sm flex items-center justify-center"
             >
-              <div className="flex flex-col items-center gap-2 text-primary">
-                <Upload size={32} />
+              <div className="flex flex-col items-center gap-2 text-foreground/70">
+                <Upload size={28} />
                 <p className="text-sm font-medium">Drop files here</p>
               </div>
             </motion.div>
@@ -242,50 +225,18 @@ export const ChatInput = ({
         </AnimatePresence>
 
         <GlassCard 
-          variant="strong" 
-          chromium 
-          className={`p-3 transition-all duration-300 ${isFocused ? 'focus-glow' : ''}`}
+          variant="clean" 
+          className={`rounded-2xl transition-all duration-200 ${isFocused ? 'border-white/20' : ''}`}
         >
           {/* Attachments preview */}
-          <FileAttachment files={attachments} onRemove={handleRemoveAttachment} />
+          {attachments.length > 0 && (
+            <div className="px-3 pt-3">
+              <FileAttachment files={attachments} onRemove={handleRemoveAttachment} />
+            </div>
+          )}
 
-          {/* Selection chips */}
-          <div className="flex items-center gap-2 px-1 pb-2 border-b border-white/5 mb-2">
-            <button
-              onClick={onOpenModelPopup}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all hover-glow"
-            >
-              <Cpu size={12} />
-              <span>{getModelDisplayName(selectedModel)}</span>
-            </button>
-            <button
-              onClick={onOpenPersonaPopup}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all hover-glow"
-            >
-              <PersonaIcon size={12} />
-              <span>{persona.name}</span>
-            </button>
-            
-            {/* Attach button */}
-            <button
-              onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all ml-auto hover-glow"
-              title="Attach files (or drag & drop)"
-            >
-              <Paperclip size={12} />
-              <span className="hidden sm:inline">Attach</span>
-            </button>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept={ACCEPTED_TYPES}
-              multiple
-              onChange={handleFileSelect}
-              className="hidden"
-            />
-          </div>
-
-          <div className="flex items-end gap-2">
+          {/* Single row input */}
+          <div className="flex items-end gap-2 p-3">
             <textarea
               ref={textareaRef}
               value={input}
@@ -293,77 +244,98 @@ export const ChatInput = ({
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              placeholder="Message Enma... (paste images or drag files)"
-              className="flex-1 bg-transparent resize-none outline-none text-foreground placeholder:text-muted-foreground/50 py-2 px-2 min-h-[40px] max-h-[200px]"
+              placeholder="Message Enma..."
+              className="flex-1 bg-transparent resize-none outline-none text-foreground placeholder:text-muted-foreground/40 py-2 min-h-[40px] max-h-[200px]"
               rows={1}
             />
 
-            {/* Voice button with sound wave animation */}
-            {isVoiceSupported && onVoiceToggle && (
-              <div className="flex items-center gap-1">
-                <AnimatePresence>
-                  {isListening && (
-                    <motion.div
-                      initial={{ opacity: 0, width: 0 }}
-                      animate={{ opacity: 1, width: "auto" }}
-                      exit={{ opacity: 0, width: 0 }}
-                      className="overflow-hidden"
-                    >
-                      <SoundWaveAnimation isActive={isListening} barCount={4} className="px-1" />
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-                <button
-                  onClick={isSpeaking ? onStopSpeaking : onVoiceToggle}
-                  disabled={isConnecting}
-                  className={`p-2.5 rounded-lg transition-all ${
-                    isConnecting
-                      ? "bg-white/5 text-muted-foreground opacity-50 cursor-wait"
-                      : isListening 
-                      ? "bg-primary/20 text-primary" 
-                      : isSpeaking
-                      ? "bg-accent/20 text-accent"
-                      : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground"
-                  }`}
-                  title={isConnecting ? "Connecting..." : isListening ? "Stop listening" : isSpeaking ? "Stop speaking" : "Start voice input"}
-                >
-                  {isConnecting ? (
-                    <div className="w-[18px] h-[18px] border-2 border-current border-t-transparent rounded-full animate-spin" />
-                  ) : isSpeaking ? (
-                    <MicOff size={18} />
-                  ) : (
-                    <Mic size={18} />
-                  )}
-                </button>
-              </div>
-            )}
+            {/* Action buttons - right side */}
+            <div className="flex items-center gap-1">
+              {/* Settings button - opens model/persona */}
+              <button
+                onClick={onOpenModelPopup}
+                className="p-2 rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-white/5 transition-all"
+                title="Model settings"
+              >
+                <Settings2 size={18} />
+              </button>
 
-            {isLoading ? (
+              {/* Attach button */}
               <button
-                onClick={onStop}
-                className="p-2.5 rounded-lg bg-white/10 text-foreground hover:bg-white/20 transition-all"
-                title="Stop generating"
+                onClick={() => fileInputRef.current?.click()}
+                className="p-2 rounded-lg text-muted-foreground/60 hover:text-foreground hover:bg-white/5 transition-all"
+                title="Attach files"
               >
-                <Square size={18} fill="currentColor" />
+                <Paperclip size={18} />
               </button>
-            ) : (
-              <button
-                onClick={handleSubmit}
-                disabled={!input.trim() && attachments.length === 0}
-                className={`p-2.5 rounded-lg transition-all ${
-                  input.trim() || attachments.length > 0
-                    ? "bg-foreground text-background hover:bg-foreground/90 btn-glow"
-                    : "bg-white/5 text-muted-foreground cursor-not-allowed"
-                }`}
-                title="Send message"
-              >
-                <Send size={18} />
-              </button>
-            )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept={ACCEPTED_TYPES}
+                multiple
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+
+              {/* Voice button */}
+              {isVoiceSupported && onVoiceToggle && (
+                <div className="flex items-center">
+                  <AnimatePresence>
+                    {isListening && (
+                      <motion.div
+                        initial={{ opacity: 0, width: 0 }}
+                        animate={{ opacity: 1, width: "auto" }}
+                        exit={{ opacity: 0, width: 0 }}
+                        className="overflow-hidden"
+                      >
+                        <SoundWaveAnimation isActive={isListening} barCount={4} className="px-1" />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                  <button
+                    onClick={isSpeaking ? onStopSpeaking : onVoiceToggle}
+                    className={`p-2 rounded-lg transition-all ${
+                      isListening 
+                        ? "text-foreground bg-white/10" 
+                        : isSpeaking
+                        ? "text-foreground bg-white/10"
+                        : "text-muted-foreground/60 hover:text-foreground hover:bg-white/5"
+                    }`}
+                    title={isListening ? "Stop listening" : isSpeaking ? "Stop speaking" : "Voice input"}
+                  >
+                    {isSpeaking ? <MicOff size={18} /> : <Mic size={18} />}
+                  </button>
+                </div>
+              )}
+
+              {/* Send/Stop button */}
+              {isLoading ? (
+                <button
+                  onClick={onStop}
+                  className="p-2 rounded-lg bg-white/10 text-foreground hover:bg-white/15 transition-all"
+                  title="Stop generating"
+                >
+                  <Square size={18} fill="currentColor" />
+                </button>
+              ) : (
+                <button
+                  onClick={handleSubmit}
+                  disabled={!input.trim() && attachments.length === 0}
+                  className={`p-2 rounded-lg transition-all ${
+                    input.trim() || attachments.length > 0
+                      ? "bg-foreground text-background hover:bg-foreground/90"
+                      : "bg-white/5 text-muted-foreground/30 cursor-not-allowed"
+                  }`}
+                  title="Send message"
+                >
+                  <Send size={18} />
+                </button>
+              )}
+            </div>
           </div>
         </GlassCard>
       </div>
-      <p className="text-xs text-muted-foreground/40 text-center mt-2">
+      <p className="text-xs text-muted-foreground/30 text-center mt-3">
         Enma can make mistakes. Consider checking important information.
       </p>
     </motion.div>
