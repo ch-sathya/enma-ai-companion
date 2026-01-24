@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Enma Design System - Pure Black & White Glassmorphism */
+/* Enma Design System - Pure Black & White Glassmorphism with Ambient Glow */
 
 @layer base {
   :root {
@@ -51,6 +51,10 @@
     --chromium-start: 0 0% 90%;
     --chromium-mid: 0 0% 50%;
     --chromium-end: 0 0% 20%;
+
+    /* Glow properties */
+    --glow-opacity: 0.15;
+    --glow-size: 200px;
 
     /* Sidebar */
     --sidebar-background: 0 0% 4%;
@@ -132,6 +136,30 @@
     border: 1px solid hsl(0 0% 100% / 0.04);
   }
 
+  /* Glow effect for glass cards */
+  .glass-glow {
+    position: relative;
+  }
+
+  .glass-glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: radial-gradient(
+      ellipse at center,
+      hsl(0 0% 100% / 0.1) 0%,
+      transparent 70%
+    );
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .glass-glow:hover::before {
+    opacity: 1;
+  }
+
   /* Chromium border effect */
   .chromium-border {
     position: relative;
@@ -193,6 +221,74 @@
     }
   }
 
+  /* Shimmer loading effect */
+  .shimmer {
+    background: linear-gradient(
+      90deg,
+      hsl(0 0% 10%) 0%,
+      hsl(0 0% 18%) 50%,
+      hsl(0 0% 10%) 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+
+  /* Ambient glow orb */
+  .ambient-orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+    animation: float 20s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    25% {
+      transform: translate(30px, -20px) scale(1.1);
+    }
+    50% {
+      transform: translate(-20px, 10px) scale(0.9);
+    }
+    75% {
+      transform: translate(20px, 20px) scale(1.05);
+    }
+  }
+
+  /* Pulsing glow effect */
+  .pulse-glow {
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% {
+      box-shadow: 0 0 20px hsl(0 0% 100% / 0.1);
+    }
+    50% {
+      box-shadow: 0 0 40px hsl(0 0% 100% / 0.2);
+    }
+  }
+
+  /* Focus glow for inputs */
+  .focus-glow {
+    transition: box-shadow 0.3s ease;
+  }
+
+  .focus-glow:focus-within {
+    box-shadow: 0 0 0 2px hsl(0 0% 100% / 0.05), 0 0 30px hsl(0 0% 100% / 0.1);
+  }
+
   /* Code block styling */
   .code-block {
     @apply glass rounded-lg overflow-hidden;
@@ -232,6 +328,31 @@
     @apply active:scale-[0.98];
   }
 
+  /* Glowing button */
+  .btn-glow {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-glow::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    background: linear-gradient(
+      45deg,
+      hsl(0 0% 100% / 0) 0%,
+      hsl(0 0% 100% / 0.3) 50%,
+      hsl(0 0% 100% / 0) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    border-radius: inherit;
+  }
+
+  .btn-glow:hover::before {
+    opacity: 1;
+  }
+
   /* Model card */
   .model-card {
     @apply glass chromium-border rounded-xl p-4 cursor-pointer;
@@ -266,6 +387,37 @@
       transform: translateY(-6px);
       opacity: 1;
     }
+  }
+
+  /* Prompt card hover glow */
+  .prompt-card {
+    @apply glass-subtle rounded-xl transition-all duration-300;
+    position: relative;
+  }
+
+  .prompt-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: radial-gradient(
+      circle at center,
+      hsl(0 0% 100% / 0.05) 0%,
+      transparent 70%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .prompt-card:hover {
+    background: hsl(0 0% 100% / 0.08);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px -10px hsl(0 0% 0% / 0.5);
+  }
+
+  .prompt-card:hover::before {
+    opacity: 1;
   }
 }
 
@@ -306,6 +458,16 @@
       opacity: 1;
       transform: translateY(0);
     }
+  }
+
+  /* Glow on hover */
+  .hover-glow {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+  }
+
+  .hover-glow:hover {
+    box-shadow: 0 0 30px hsl(0 0% 100% / 0.1);
+    transform: translateY(-1px);
   }
 
   /* Safe area insets for mobile */

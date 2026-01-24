@@ -4,10 +4,11 @@ import { HTMLAttributes, forwardRef } from "react";
 interface GlassCardProps extends HTMLAttributes<HTMLDivElement> {
   variant?: "default" | "strong" | "subtle";
   chromium?: boolean;
+  glow?: boolean;
 }
 
 export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
-  ({ className, variant = "default", chromium, children, ...props }, ref) => {
+  ({ className, variant = "default", chromium, glow, children, ...props }, ref) => {
     const variantClasses = {
       default: "glass",
       strong: "glass-strong",
@@ -21,6 +22,7 @@ export const GlassCard = forwardRef<HTMLDivElement, GlassCardProps>(
           "rounded-xl",
           variantClasses[variant],
           chromium && "chromium-border",
+          glow && "glass-glow",
           className
         )}
         {...props}
