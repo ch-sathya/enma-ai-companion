@@ -350,17 +350,47 @@ export const Chat = () => {
                     "Write a poem",
                     "Explain something",
                     "Brainstorm ideas",
-                  ].map((suggestion) => (
-                    <button
+                  ].map((suggestion, index) => (
+                    <motion.button
                       key={suggestion}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.3 + index * 0.1, duration: 0.3 }}
                       onClick={() => handleSendMessage(suggestion)}
                       className="px-4 py-2 text-sm text-muted-foreground bg-white/5 rounded-full 
                                  hover:bg-white/10 hover:text-foreground transition-all border border-white/10"
                     >
                       {suggestion}
-                    </button>
+                    </motion.button>
                   ))}
                 </div>
+                
+                {/* Typing indicator - ready to help */}
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.7, duration: 0.4 }}
+                  className="mt-8 flex items-center gap-2 text-muted-foreground/60"
+                >
+                  <div className="flex gap-1">
+                    <motion.span
+                      className="w-1.5 h-1.5 bg-current rounded-full"
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 1.4, repeat: Infinity, delay: 0 }}
+                    />
+                    <motion.span
+                      className="w-1.5 h-1.5 bg-current rounded-full"
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 1.4, repeat: Infinity, delay: 0.2 }}
+                    />
+                    <motion.span
+                      className="w-1.5 h-1.5 bg-current rounded-full"
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 1.4, repeat: Infinity, delay: 0.4 }}
+                    />
+                  </div>
+                  <span className="text-xs">Ready to assist</span>
+                </motion.div>
               </motion.div>
             </div>
           ) : (
