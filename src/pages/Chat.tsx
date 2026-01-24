@@ -13,7 +13,8 @@ import { GlassCard } from "@/components/GlassCard";
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { getPersonaById, Persona } from "@/data/personas";
-import { Sparkles } from "lucide-react";
+import { Sparkles, PanelLeft } from "lucide-react";
+import { MessageSkeleton } from "@/components/MessageSkeleton";
 
 interface Settings {
   model: string;
@@ -151,9 +152,21 @@ export const Chat = () => {
           sidebarOpen ? "md:ml-[280px]" : ""
         }`}
       >
-        {/* Header for mobile */}
-        <div className="h-14 flex-shrink-0 flex items-center justify-center border-b border-white/5 md:hidden safe-top">
-          <EnmaLogo size="sm" />
+        {/* Header */}
+        <div className="h-14 flex-shrink-0 flex items-center px-4 border-b border-white/5 safe-top">
+          {/* Desktop: show toggle when sidebar closed */}
+          {!sidebarOpen && (
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors hidden md:flex items-center justify-center mr-3"
+              title="Open sidebar"
+            >
+              <PanelLeft size={20} />
+            </button>
+          )}
+          <div className="flex-1 flex justify-center md:justify-start">
+            <EnmaLogo size="sm" />
+          </div>
         </div>
 
         {/* Messages area */}
@@ -212,6 +225,9 @@ export const Chat = () => {
                   isStreaming={isLoading && index === messages.length - 1 && message.role === "assistant"}
                 />
               ))}
+              {isLoading && messages.length > 0 && messages[messages.length - 1].role === "user" && (
+                <MessageSkeleton />
+              )}
               <div ref={messagesEndRef} />
             </div>
           )}
