@@ -73,9 +73,12 @@ export const SettingsPopup = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-x-4 top-[5%] bottom-[5%] md:inset-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2 z-50 md:w-full md:max-w-md flex flex-col"
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <GlassCard variant="strong" className="p-0 flex flex-col h-full md:h-auto md:max-h-[90vh]">
+            <GlassCard
+              variant="strong"
+              className="p-0 flex flex-col w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-hidden"
+            >
               {/* Header */}
               <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-white/10">
                 <h2 className="text-lg font-semibold text-foreground">Settings</h2>
@@ -88,7 +91,7 @@ export const SettingsPopup = ({
               </div>
 
               {/* Content - scrollable */}
-              <div className="flex-1 overflow-y-auto p-4 space-y-6">
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-6">
                 {/* Display Name */}
                 <div className="space-y-2">
                   <Label className="flex items-center gap-2 text-foreground">
