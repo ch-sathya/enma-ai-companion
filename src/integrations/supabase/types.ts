@@ -94,9 +94,12 @@ export type Database = {
           glass_blur: number | null
           glass_opacity: number | null
           id: string
+          preferred_voice: string | null
           system_prompt: string | null
           updated_at: string
           user_id: string
+          voice_enabled: boolean | null
+          wake_word_enabled: boolean | null
         }
         Insert: {
           accent_hue?: number | null
@@ -106,9 +109,12 @@ export type Database = {
           glass_blur?: number | null
           glass_opacity?: number | null
           id?: string
+          preferred_voice?: string | null
           system_prompt?: string | null
           updated_at?: string
           user_id: string
+          voice_enabled?: boolean | null
+          wake_word_enabled?: boolean | null
         }
         Update: {
           accent_hue?: number | null
@@ -118,9 +124,12 @@ export type Database = {
           glass_blur?: number | null
           glass_opacity?: number | null
           id?: string
+          preferred_voice?: string | null
           system_prompt?: string | null
           updated_at?: string
           user_id?: string
+          voice_enabled?: boolean | null
+          wake_word_enabled?: boolean | null
         }
         Relationships: []
       }

@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
@@ -21,7 +22,7 @@ interface ChatMessageProps {
   onEdit?: () => void;
 }
 
-export const ChatMessage = ({ 
+const ChatMessageComponent = ({ 
   role, 
   content, 
   attachments,
@@ -238,3 +239,6 @@ export const ChatMessage = ({
     </motion.div>
   );
 };
+
+// Memoize to prevent unnecessary re-renders during streaming
+export const ChatMessage = memo(ChatMessageComponent);

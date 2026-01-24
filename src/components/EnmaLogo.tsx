@@ -1,11 +1,19 @@
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 interface EnmaLogoProps {
   size?: "sm" | "md" | "lg" | "xl";
   showIcon?: boolean;
+  centered?: boolean;
+  asLink?: boolean;
 }
 
-export const EnmaLogo = ({ size = "md", showIcon = true }: EnmaLogoProps) => {
+export const EnmaLogo = ({ 
+  size = "md", 
+  showIcon = true, 
+  centered = false,
+  asLink = true 
+}: EnmaLogoProps) => {
   const sizeClasses = {
     sm: "text-lg",
     md: "text-xl",
@@ -20,13 +28,16 @@ export const EnmaLogo = ({ size = "md", showIcon = true }: EnmaLogoProps) => {
     xl: "w-16 h-16",
   };
 
-  return (
-    <Link to="/" className="flex items-center gap-2 group">
+  const content = (
+    <>
       {showIcon && (
         <img
           src="/enma-logo.png"
           alt="Enma"
-          className={`${iconSizes[size]} object-contain transition-transform duration-300 group-hover:rotate-12`}
+          className={cn(
+            iconSizes[size],
+            "object-contain transition-transform duration-300 group-hover:rotate-12"
+          )}
           style={{ 
             filter: 'brightness(0.95) contrast(1.05)',
             mixBlendMode: 'normal'
@@ -34,10 +45,28 @@ export const EnmaLogo = ({ size = "md", showIcon = true }: EnmaLogoProps) => {
         />
       )}
       <span
-        className={`font-bold tracking-wider text-foreground ${sizeClasses[size]}`}
+        className={cn(
+          "font-bold tracking-wider text-foreground",
+          sizeClasses[size]
+        )}
       >
         ENMA
       </span>
+    </>
+  );
+
+  const className = cn(
+    "flex items-center gap-2 group",
+    centered && "justify-center"
+  );
+
+  if (!asLink) {
+    return <div className={className}>{content}</div>;
+  }
+
+  return (
+    <Link to="/" className={className}>
+      {content}
     </Link>
   );
 };
