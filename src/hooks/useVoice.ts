@@ -240,6 +240,12 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
 
   // Start listening
   const startListening = useCallback(async () => {
+    // Guard: don't start if already listening
+    if (isListening || shouldBeListeningRef.current) {
+      console.log('Already listening, skipping start');
+      return;
+    }
+    
     if (!isSupported) {
       toast.error("Speech recognition is not supported in your browser.");
       return;
@@ -259,27 +265,38 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
         setIsListening(true);
         setTranscript("");
       } catch (error) {
-        console.error("Failed to start recognition:", error);
-        toast.error("Failed to start voice recognition.");
-        shouldBeListeningRef.current = false;
+        // Handle "already started" error gracefully
+        if (error instanceof DOMException && error.name === 'InvalidStateError') {
+          console.log('Recognition already started, ignoring');
+          setIsListening(true);
+        } else {
+          console.error("Failed to start recognition:", error);
+          toast.error("Failed to start voice recognition.");
+          shouldBeListeningRef.current = false;
+        }
       }
     }
-  }, [isSupported, hasPermission, requestPermission, initRecognition]);
+  }, [isSupported, isListening, hasPermission, requestPermission, initRecognition]);
 
   // Stop listening
   const stopListening = useCallback(() => {
-    // Clear any pending retries
+    shouldBeListeningRef.current = false;
+    
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
       retryTimeoutRef.current = null;
     }
-    retryCountRef.current = 0;
-    shouldBeListeningRef.current = false;
-
+    
     if (recognitionRef.current) {
-      recognitionRef.current.stop();
-      setIsListening(false);
+      try {
+        recognitionRef.current.stop();
+      } catch (error) {
+        console.warn('Error stopping recognition:', error);
+      }
     }
+    
+    setIsListening(false);
+    setTranscript('');
   }, []);
 
   // Toggle listening
@@ -293,11 +310,17 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
 
   // Start wake word detection
   const startWakeWordDetection = useCallback(async () => {
+    // Guard: don't start if already listening
+    if (isListening || shouldBeListeningRef.current) {
+      console.log('Already listening for wake word, skipping start');
+      return;
+    }
+    
     if (!wakeWordEnabled || !isSupported) return;
 
     setIsWakeWordMode(true);
     await startListening();
-  }, [wakeWordEnabled, isSupported, startListening]);
+  }, [wakeWordEnabled, isSupported, isListening, startListening]);
 
   // Stop wake word detection
   const stopWakeWordDetection = useCallback(() => {

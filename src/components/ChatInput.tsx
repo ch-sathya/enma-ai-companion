@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Send, Square, Cpu, Paperclip, Upload } from "lucide-react";
+import { Send, Square, Cpu, Paperclip, Upload, Mic, MicOff } from "lucide-react";
 import { GlassCard } from "./GlassCard";
 import { getPersonaById } from "@/data/personas";
 import { FileAttachment, AttachedFile } from "./FileAttachment";
@@ -36,6 +36,12 @@ interface ChatInputProps {
   selectedPersonaId: string;
   onOpenModelPopup: () => void;
   onOpenPersonaPopup: () => void;
+  // Voice props
+  isListening?: boolean;
+  isSpeaking?: boolean;
+  isVoiceSupported?: boolean;
+  onVoiceToggle?: () => void;
+  onStopSpeaking?: () => void;
 }
 
 export const ChatInput = ({
@@ -46,6 +52,11 @@ export const ChatInput = ({
   selectedPersonaId,
   onOpenModelPopup,
   onOpenPersonaPopup,
+  isListening = false,
+  isSpeaking = false,
+  isVoiceSupported = false,
+  onVoiceToggle,
+  onStopSpeaking,
 }: ChatInputProps) => {
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
@@ -283,6 +294,23 @@ export const ChatInput = ({
               className="flex-1 bg-transparent resize-none outline-none text-foreground placeholder:text-muted-foreground/50 py-2 px-2 min-h-[40px] max-h-[200px]"
               rows={1}
             />
+
+            {/* Voice button */}
+            {isVoiceSupported && onVoiceToggle && (
+              <button
+                onClick={isSpeaking ? onStopSpeaking : onVoiceToggle}
+                className={`p-2.5 rounded-lg transition-all ${
+                  isListening 
+                    ? "bg-primary/20 text-primary animate-pulse" 
+                    : isSpeaking
+                    ? "bg-accent/20 text-accent"
+                    : "bg-white/5 text-muted-foreground hover:bg-white/10 hover:text-foreground"
+                }`}
+                title={isListening ? "Stop listening" : isSpeaking ? "Stop speaking" : "Start voice input"}
+              >
+                {isSpeaking ? <MicOff size={18} /> : <Mic size={18} />}
+              </button>
+            )}
 
             {isLoading ? (
               <button

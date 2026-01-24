@@ -11,7 +11,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { SettingsPopup } from "@/components/SettingsPopup";
 import { EnmaLogo } from "@/components/EnmaLogo";
 import { GlassCard } from "@/components/GlassCard";
-import { VoiceButton } from "@/components/VoiceButton";
+
 import { VoicePreviewCard } from "@/components/VoicePreviewCard";
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
@@ -435,27 +435,20 @@ export const Chat = () => {
 
         {/* Input area */}
         <div className="px-4 pb-6 safe-bottom">
-          <div className="max-w-3xl mx-auto flex items-end gap-3">
-            <div className="flex-1">
-              <ChatInput
-                onSend={handleSendMessage}
-                onStop={stopGeneration}
-                isLoading={isLoading}
-                selectedModel={settings.model}
-                selectedPersonaId={settings.personaId}
-                onOpenModelPopup={() => setModelPopupOpen(true)}
-                onOpenPersonaPopup={() => setPersonaPopupOpen(true)}
-              />
-            </div>
-            
-            {/* Voice button */}
-            <VoiceButton
+          <div className="max-w-3xl mx-auto">
+            <ChatInput
+              onSend={handleSendMessage}
+              onStop={stopGeneration}
+              isLoading={isLoading}
+              selectedModel={settings.model}
+              selectedPersonaId={settings.personaId}
+              onOpenModelPopup={() => setModelPopupOpen(true)}
+              onOpenPersonaPopup={() => setPersonaPopupOpen(true)}
               isListening={voice.isListening}
               isSpeaking={voice.isSpeaking}
-              isSupported={voice.isSupported}
-              onToggle={handleVoiceToggle}
+              isVoiceSupported={voice.isSupported}
+              onVoiceToggle={handleVoiceToggle}
               onStopSpeaking={voice.stopSpeaking}
-              size="lg"
             />
           </div>
         </div>
