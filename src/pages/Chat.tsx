@@ -13,7 +13,7 @@ import { GlassCard } from "@/components/GlassCard";
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { getPersonaById, Persona } from "@/data/personas";
-import { Sparkles, PanelLeft } from "lucide-react";
+import { Sparkles, PanelLeft, PanelLeftClose } from "lucide-react";
 import { MessageSkeleton } from "@/components/MessageSkeleton";
 
 interface Settings {
@@ -154,19 +154,15 @@ export const Chat = () => {
       >
         {/* Header */}
         <div className="h-14 flex-shrink-0 flex items-center px-4 border-b border-white/5 safe-top">
-          {/* Desktop: show toggle when sidebar closed */}
-          {!sidebarOpen && (
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="p-2 rounded-lg hover:bg-white/10 transition-colors hidden md:flex items-center justify-center mr-3"
-              title="Open sidebar"
-            >
-              <PanelLeft size={20} />
-            </button>
-          )}
-          <div className="flex-1 flex justify-center md:justify-start">
-            <EnmaLogo size="sm" />
-          </div>
+          {/* Toggle button - always visible beside logo */}
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center mr-2"
+            title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
+          >
+            {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
+          </button>
+          <EnmaLogo size="sm" />
         </div>
 
         {/* Messages area */}

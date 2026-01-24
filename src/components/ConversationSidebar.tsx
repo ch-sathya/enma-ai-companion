@@ -40,22 +40,15 @@ export const ConversationSidebar = ({
 }: ConversationSidebarProps) => {
   return (
     <>
-      {/* Desktop toggle - always visible */}
-      <button
-        onClick={onToggle}
-        className="fixed top-4 left-4 z-50 p-2 rounded-lg glass hidden md:flex items-center justify-center hover:bg-white/10 transition-colors"
-        title={isOpen ? "Close sidebar" : "Open sidebar"}
-      >
-        {isOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
-      </button>
-
-      {/* Mobile toggle */}
-      <button
-        onClick={onToggle}
-        className="fixed top-4 left-4 z-50 p-2 rounded-lg glass md:hidden safe-top"
-      >
-        {isOpen ? <X size={20} /> : <Menu size={20} />}
-      </button>
+      {/* Mobile toggle - only visible on mobile when sidebar closed */}
+      {!isOpen && (
+        <button
+          onClick={onToggle}
+          className="fixed top-4 left-4 z-50 p-2 rounded-lg glass md:hidden safe-top"
+        >
+          <Menu size={20} />
+        </button>
+      )}
 
       {/* Backdrop for mobile */}
       <AnimatePresence>
