@@ -45,6 +45,7 @@ export const EnmaLogo = ({
           )}
           initial={animate ? { opacity: 0, scale: 0.5, rotate: -10 } : false}
           animate={animate ? { opacity: 1, scale: 1, rotate: 0 } : false}
+          whileHover={{ scale: 1.05 }}
           transition={{
             type: "spring",
             stiffness: 260,
@@ -52,6 +53,20 @@ export const EnmaLogo = ({
             delay: 0.1,
           }}
         >
+          {/* Pulsing glow effect on hover */}
+          <motion.div
+            className="absolute inset-0 rounded-full bg-white/30 blur-xl scale-150 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+            animate={{ 
+              scale: [1.3, 1.6, 1.3],
+              opacity: [0, 0.4, 0]
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            style={{ pointerEvents: 'none' }}
+          />
           <img
             src="/enma-logo.png"
             alt="Enma"
