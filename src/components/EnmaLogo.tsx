@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface EnmaLogoProps {
@@ -8,6 +9,7 @@ interface EnmaLogoProps {
   asLink?: boolean;
   vertical?: boolean;
   glow?: boolean;
+  animate?: boolean;
 }
 
 export const EnmaLogo = ({ 
@@ -17,6 +19,7 @@ export const EnmaLogo = ({
   asLink = true,
   vertical = false,
   glow = false,
+  animate = true,
 }: EnmaLogoProps) => {
   const sizeClasses = {
     sm: "text-lg",
@@ -35,10 +38,20 @@ export const EnmaLogo = ({
   const content = (
     <>
       {showIcon && (
-        <div className={cn(
-          "relative transition-transform duration-500 group-hover:rotate-12",
-          glow && "after:absolute after:inset-0 after:rounded-full after:bg-white/20 after:blur-xl after:scale-150 after:opacity-50"
-        )}>
+        <motion.div 
+          className={cn(
+            "relative transition-transform duration-500 group-hover:rotate-12",
+            glow && "after:absolute after:inset-0 after:rounded-full after:bg-white/20 after:blur-xl after:scale-150 after:opacity-50"
+          )}
+          initial={animate ? { opacity: 0, scale: 0.5, rotate: -10 } : false}
+          animate={animate ? { opacity: 1, scale: 1, rotate: 0 } : false}
+          transition={{
+            type: "spring",
+            stiffness: 260,
+            damping: 20,
+            delay: 0.1,
+          }}
+        >
           <img
             src="/enma-logo.png"
             alt="Enma"
@@ -51,16 +64,23 @@ export const EnmaLogo = ({
               mixBlendMode: 'normal'
             }}
           />
-        </div>
+        </motion.div>
       )}
-      <span
+      <motion.span
         className={cn(
           "font-bold tracking-wider text-foreground",
           sizeClasses[size]
         )}
+        initial={animate ? { opacity: 0, y: 8 } : false}
+        animate={animate ? { opacity: 1, y: 0 } : false}
+        transition={{
+          duration: 0.4,
+          delay: 0.2,
+          ease: "easeOut",
+        }}
       >
         ENMA
-      </span>
+      </motion.span>
     </>
   );
 
