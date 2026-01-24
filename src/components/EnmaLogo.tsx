@@ -8,6 +8,7 @@ interface EnmaLogoProps {
   asLink?: boolean;
   vertical?: boolean;
   glow?: boolean;
+  darkIcon?: boolean;
 }
 
 export const EnmaLogo = ({ 
@@ -17,6 +18,7 @@ export const EnmaLogo = ({
   asLink = true,
   vertical = false,
   glow = false,
+  darkIcon = false,
 }: EnmaLogoProps) => {
   const sizeClasses = {
     sm: "text-lg",
@@ -36,20 +38,24 @@ export const EnmaLogo = ({
     <>
       {showIcon && (
         <div className={cn(
-          "relative transition-transform duration-500 group-hover:rotate-12",
+          "relative transition-transform duration-500 group-hover:rotate-12 rounded-full flex items-center justify-center",
+          darkIcon ? "bg-black border border-white/20" : "bg-transparent",
+          size === "sm" && "w-8 h-8",
+          size === "md" && "w-10 h-10",
+          size === "lg" && "w-14 h-14",
+          size === "xl" && "w-24 h-24",
           glow && "after:absolute after:inset-0 after:rounded-full after:bg-white/20 after:blur-xl after:scale-150 after:opacity-50"
         )}>
           <img
-            src="/enma-logo.png"
+            src="/enma-logo-white.svg"
             alt="Enma"
             className={cn(
-              iconSizes[size],
-              "object-contain relative z-10"
+              "object-contain relative z-10",
+              size === "sm" && "w-5 h-5",
+              size === "md" && "w-6 h-6",
+              size === "lg" && "w-9 h-9",
+              size === "xl" && "w-16 h-16"
             )}
-            style={{ 
-              filter: 'brightness(0.95) contrast(1.05)',
-              mixBlendMode: 'normal'
-            }}
           />
         </div>
       )}

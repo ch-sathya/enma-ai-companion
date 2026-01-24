@@ -13,6 +13,7 @@ import { EnmaLogo } from "@/components/EnmaLogo";
 import { GlassCard } from "@/components/GlassCard";
 
 import { VoicePreviewCard } from "@/components/VoicePreviewCard";
+import { VoiceSelector } from "@/components/VoiceSelector";
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
@@ -180,19 +181,26 @@ export const Chat = () => {
     hasPermission,
     isListening,
   } = voice;
+  // Ref to track if wake word initialization was attempted this session
+  const wakeWordStartedRef = useRef(false);
+  
   useEffect(() => {
-    if (preferences.wake_word_enabled && hasPermission === true) {
+    // Only attempt to start once when conditions are met
+    if (preferences.wake_word_enabled && hasPermission === true && !wakeWordStartedRef.current) {
+      wakeWordStartedRef.current = true;
       void startWakeWordDetection();
-    } else {
+    }
+    
+    // Reset on disable
+    if (!preferences.wake_word_enabled) {
+      wakeWordStartedRef.current = false;
       stopWakeWordDetection();
     }
-    return () => stopWakeWordDetection();
-  }, [
-    preferences.wake_word_enabled,
-    hasPermission,
-    startWakeWordDetection,
-    stopWakeWordDetection,
-  ]);
+    
+    return () => {
+      // Only stop on unmount, not on every render
+    };
+  }, [preferences.wake_word_enabled, hasPermission, startWakeWordDetection, stopWakeWordDetection]);
 
   const handleVoiceToggle = useCallback(() => {
     // If wake word is enabled, mic button controls wake-word listening mode.
@@ -389,6 +397,14 @@ export const Chat = () => {
                   }
                   onStop={voice.stopSpeaking}
                 />
+
+                {/* Voice selector */}
+                {preferences.voice_enabled && voice.isTTSSupported && (
+                  <VoiceSelector
+                    selectedVoice={preferences.preferred_voice}
+                    onSelectVoice={(voiceName) => savePreferences({ preferred_voice: voiceName })}
+                  />
+                )}
 
                 {/* Quick prompts */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto">
