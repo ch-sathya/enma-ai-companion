@@ -15,7 +15,7 @@ import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { useVoice } from "@/hooks/useVoice";
+import { useElevenLabsVoice } from "@/hooks/useElevenLabsVoice";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { getPersonaById, Persona } from "@/data/personas";
 import { Settings } from "lucide-react";
@@ -71,7 +71,6 @@ export const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastSpokenRef = useRef<string>("");
   const usedVoiceInputRef = useRef(false);
-  const wakeWordInitializedRef = useRef(false);
 
   // User preferences
   const { preferences, savePreferences } = useUserPreferences(user);
@@ -160,63 +159,23 @@ export const Chat = () => {
     [handleSendMessageInternal]
   );
 
-  const handleWakeWord = useCallback(() => {
-    // Wake word detected - visual feedback could be added here
-    console.log("Wake word detected!");
-  }, []);
-
-  const voice = useVoice({
+  const voice = useElevenLabsVoice({
     onTranscript: handleVoiceTranscript,
-    onWakeWord: handleWakeWord,
-    wakeWordEnabled: preferences.wake_word_enabled,
     voiceEnabled: preferences.voice_enabled,
     preferredVoice: preferences.preferred_voice,
   });
 
-  // Auto-start/stop wake word listening when enabled (only after mic permission)
+  // Destructure voice methods
   const {
-    startWakeWordDetection,
-    stopWakeWordDetection,
     toggleListening,
     hasPermission,
     isListening,
+    isConnecting,
   } = voice;
-  
-  // Store functions in refs to use in effect without recreating
-  const startWakeWordRef = useRef(startWakeWordDetection);
-  const stopWakeWordRef = useRef(stopWakeWordDetection);
-  startWakeWordRef.current = startWakeWordDetection;
-  stopWakeWordRef.current = stopWakeWordDetection;
-  
-  useEffect(() => {
-    // Only initialize once per wake word enable, using ref to track
-    if (preferences.wake_word_enabled && hasPermission === true && !wakeWordInitializedRef.current) {
-      wakeWordInitializedRef.current = true;
-      void startWakeWordRef.current();
-    } else if (!preferences.wake_word_enabled && wakeWordInitializedRef.current) {
-      wakeWordInitializedRef.current = false;
-      stopWakeWordRef.current();
-    }
-    // No cleanup - handled by the ref tracking
-  }, [preferences.wake_word_enabled, hasPermission]);
 
   const handleVoiceToggle = useCallback(() => {
-    // If wake word is enabled, mic button controls wake-word listening mode.
-    // This ensures a user gesture kicks off permissions in stricter browsers.
-    if (preferences.wake_word_enabled) {
-      if (isListening) stopWakeWordDetection();
-      else void startWakeWordDetection();
-      return;
-    }
-
     toggleListening();
-  }, [
-    preferences.wake_word_enabled,
-    isListening,
-    startWakeWordDetection,
-    stopWakeWordDetection,
-    toggleListening,
-  ]);
+  }, [toggleListening]);
 
   // Speak assistant responses ONLY if user used voice input
   useEffect(() => {
@@ -428,6 +387,7 @@ export const Chat = () => {
               onOpenModelPopup={() => setModelPopupOpen(true)}
               onOpenPersonaPopup={() => setPersonaPopupOpen(true)}
               isListening={voice.isListening}
+              isConnecting={voice.isConnecting}
               isSpeaking={voice.isSpeaking}
               isVoiceSupported={voice.isSupported}
               onVoiceToggle={handleVoiceToggle}
