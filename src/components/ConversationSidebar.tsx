@@ -68,12 +68,12 @@ export const ConversationSidebar = ({
       >
         <GlassCard variant="strong" className="h-full rounded-none rounded-r-2xl flex flex-col">
           {/* Logo */}
-          <div className="px-5 py-4 border-b border-white/5 safe-top">
+          <div className="px-4 py-4 border-b border-white/5 safe-top">
             <EnmaLogo size="sm" showIcon={true} />
           </div>
 
           {/* New chat button */}
-          <div className="p-4">
+          <div className="px-4 py-4">
             <button
               onClick={onNewConversation}
               className="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-white/5 hover:bg-white/10 text-foreground border border-white/10 transition-all"
@@ -125,7 +125,7 @@ export const ConversationSidebar = ({
           </div>
 
           {/* User section */}
-          <div className="p-4 border-t border-white/5 safe-bottom">
+          <div className="px-4 py-4 border-t border-white/5 safe-bottom">
             {user ? (
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-foreground">

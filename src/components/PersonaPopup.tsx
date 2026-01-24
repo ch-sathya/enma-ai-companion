@@ -37,7 +37,7 @@ export const PersonaPopup = ({ isOpen, onClose, selectedPersonaId, onSelectPerso
             transition={{ duration: 0.2, ease: "easeOut" }}
             className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-2rem)] max-w-md"
           >
-            <GlassCard variant="strong" chromium className="p-4 max-h-[80vh] flex flex-col">
+            <GlassCard variant="strong" chromium className="p-4 max-h-[70vh] flex flex-col">
               {/* Header */}
               <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <h3 className="font-medium text-foreground">Select Persona</h3>
