@@ -1,18 +1,40 @@
 import { useState, useRef, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Send, Square, Settings2 } from "lucide-react";
+import { Send, Square, Cpu, Sparkles } from "lucide-react";
 import { GlassCard } from "./GlassCard";
+import { getPersonaById } from "@/data/personas";
 
 interface ChatInputProps {
   onSend: (message: string) => void;
   onStop?: () => void;
   isLoading?: boolean;
-  onOpenSettings?: () => void;
+  selectedModel: string;
+  selectedPersonaId: string;
+  onOpenModelPopup: () => void;
+  onOpenPersonaPopup: () => void;
 }
 
-export const ChatInput = ({ onSend, onStop, isLoading, onOpenSettings }: ChatInputProps) => {
+export const ChatInput = ({
+  onSend,
+  onStop,
+  isLoading,
+  selectedModel,
+  selectedPersonaId,
+  onOpenModelPopup,
+  onOpenPersonaPopup,
+}: ChatInputProps) => {
   const [input, setInput] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const persona = getPersonaById(selectedPersonaId);
+  const PersonaIcon = persona.icon;
+
+  // Get short model name
+  const getModelDisplayName = (modelId: string) => {
+    const parts = modelId.split('/');
+    const name = parts[parts.length - 1];
+    return name.replace(/-preview$/, '').replace('gemini-', 'G').replace('gpt-', 'GPT-');
+  };
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -44,50 +66,60 @@ export const ChatInput = ({ onSend, onStop, isLoading, onOpenSettings }: ChatInp
       className="w-full"
     >
       <GlassCard variant="strong" chromium className="p-2">
-        <div className="flex items-end gap-2">
+        {/* Selection chips */}
+        <div className="flex items-center gap-2 px-2 pb-2 border-b border-white/5 mb-2">
           <button
-            onClick={onOpenSettings}
-            className="p-3 rounded-lg text-muted-foreground hover:text-foreground hover:bg-white/5 transition-all"
-            title="Model Settings"
+            onClick={onOpenModelPopup}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all"
           >
-            <Settings2 size={20} />
+            <Cpu size={12} />
+            <span>{getModelDisplayName(selectedModel)}</span>
           </button>
+          <button
+            onClick={onOpenPersonaPopup}
+            className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all"
+          >
+            <PersonaIcon size={12} />
+            <span>{persona.name}</span>
+          </button>
+        </div>
 
+        <div className="flex items-end gap-2">
           <textarea
             ref={textareaRef}
             value={input}
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Message Enma..."
-            className="flex-1 bg-transparent resize-none outline-none text-foreground placeholder:text-muted-foreground/50 py-3 px-2 min-h-[48px] max-h-[200px]"
+            className="flex-1 bg-transparent resize-none outline-none text-foreground placeholder:text-muted-foreground/50 py-2 px-2 min-h-[40px] max-h-[200px]"
             rows={1}
           />
 
           {isLoading ? (
             <button
               onClick={onStop}
-              className="p-3 rounded-lg bg-destructive/20 text-destructive hover:bg-destructive/30 transition-all"
+              className="p-2.5 rounded-lg bg-white/10 text-foreground hover:bg-white/20 transition-all"
               title="Stop generating"
             >
-              <Square size={20} fill="currentColor" />
+              <Square size={18} fill="currentColor" />
             </button>
           ) : (
             <button
               onClick={handleSubmit}
               disabled={!input.trim()}
-              className={`p-3 rounded-lg transition-all ${
+              className={`p-2.5 rounded-lg transition-all ${
                 input.trim()
-                  ? "bg-primary text-primary-foreground hover:brightness-110"
+                  ? "bg-foreground text-background hover:bg-foreground/90"
                   : "bg-white/5 text-muted-foreground cursor-not-allowed"
               }`}
               title="Send message"
             >
-              <Send size={20} />
+              <Send size={18} />
             </button>
           )}
         </div>
       </GlassCard>
-      <p className="text-xs text-muted-foreground/50 text-center mt-2">
+      <p className="text-xs text-muted-foreground/40 text-center mt-2">
         Enma can make mistakes. Consider checking important information.
       </p>
     </motion.div>

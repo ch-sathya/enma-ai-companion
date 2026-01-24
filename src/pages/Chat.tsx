@@ -4,38 +4,39 @@ import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { ChatMessage } from "@/components/ChatMessage";
 import { ChatInput } from "@/components/ChatInput";
-import { SettingsPanel } from "@/components/SettingsPanel";
+import { ModelPopup } from "@/components/ModelPopup";
+import { PersonaPopup } from "@/components/PersonaPopup";
 import { ConversationSidebar } from "@/components/ConversationSidebar";
 import { AuthModal } from "@/components/AuthModal";
 import { EnmaLogo } from "@/components/EnmaLogo";
 import { GlassCard } from "@/components/GlassCard";
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
+import { getPersonaById, Persona } from "@/data/personas";
 import { Sparkles } from "lucide-react";
 
 interface Settings {
   model: string;
+  personaId: string;
   temperature: number;
   topP: number;
   maxTokens: number;
-  accentHue: number;
-  systemPrompt: string;
 }
 
 const DEFAULT_SETTINGS: Settings = {
   model: "google/gemini-3-flash-preview",
+  personaId: "general",
   temperature: 0.7,
   topP: 0.9,
   maxTokens: 2048,
-  accentHue: 185,
-  systemPrompt: "You are Enma, a helpful AI assistant. You provide clear, accurate, and thoughtful responses.",
 };
 
 export const Chat = () => {
   const [user, setUser] = useState<User | null>(null);
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [modelPopupOpen, setModelPopupOpen] = useState(false);
+  const [personaPopupOpen, setPersonaPopupOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -49,8 +50,18 @@ export const Chat = () => {
     loadConversations,
   } = useConversations(user?.id || null);
 
+  const persona = getPersonaById(settings.personaId);
+  
+  const chatSettings = {
+    model: settings.model,
+    temperature: settings.temperature,
+    topP: settings.topP,
+    maxTokens: settings.maxTokens,
+    systemPrompt: persona.systemPrompt,
+  };
+
   const { messages, isLoading, sendMessage, stopGeneration, loadMessages, clearMessages } =
-    useChat(currentConversationId, settings);
+    useChat(currentConversationId, chatSettings);
 
   // Auth state
   useEffect(() => {
@@ -79,11 +90,6 @@ export const Chat = () => {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
-
-  // Apply accent hue on mount
-  useEffect(() => {
-    document.documentElement.style.setProperty("--accent-hue", String(settings.accentHue));
-  }, [settings.accentHue]);
 
   const handleSendMessage = async (content: string) => {
     let convId = currentConversationId;
@@ -117,6 +123,10 @@ export const Chat = () => {
     setUser(null);
     setCurrentConversationId(null);
     clearMessages();
+  };
+
+  const handleSelectPersona = (persona: Persona) => {
+    setSettings(prev => ({ ...prev, personaId: persona.id }));
   };
 
   return (
@@ -177,7 +187,7 @@ export const Chat = () => {
                         className="p-4 hover:bg-white/5 transition-colors cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
-                          <Sparkles size={14} className="text-primary" />
+                          <Sparkles size={14} className="text-muted-foreground" />
                           <span className="text-sm text-muted-foreground">{prompt}</span>
                         </div>
                       </GlassCard>
@@ -203,24 +213,35 @@ export const Chat = () => {
         </div>
 
         {/* Input area */}
-        <div className="p-4 pb-6">
+        <div className="p-4 pb-6 safe-bottom">
           <div className="max-w-4xl mx-auto">
             <ChatInput
               onSend={handleSendMessage}
               onStop={stopGeneration}
               isLoading={isLoading}
-              onOpenSettings={() => setSettingsOpen(true)}
+              selectedModel={settings.model}
+              selectedPersonaId={settings.personaId}
+              onOpenModelPopup={() => setModelPopupOpen(true)}
+              onOpenPersonaPopup={() => setPersonaPopupOpen(true)}
             />
           </div>
         </div>
       </main>
 
-      {/* Settings panel */}
-      <SettingsPanel
-        isOpen={settingsOpen}
-        onClose={() => setSettingsOpen(false)}
-        settings={settings}
-        onSettingsChange={setSettings}
+      {/* Model popup */}
+      <ModelPopup
+        isOpen={modelPopupOpen}
+        onClose={() => setModelPopupOpen(false)}
+        selectedModel={settings.model}
+        onSelectModel={(model) => setSettings(prev => ({ ...prev, model }))}
+      />
+
+      {/* Persona popup */}
+      <PersonaPopup
+        isOpen={personaPopupOpen}
+        onClose={() => setPersonaPopupOpen(false)}
+        selectedPersonaId={settings.personaId}
+        onSelectPersona={handleSelectPersona}
       />
 
       {/* Auth modal */}
