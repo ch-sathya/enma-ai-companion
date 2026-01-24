@@ -35,9 +35,9 @@ export const PersonaPopup = ({ isOpen, onClose, selectedPersonaId, onSelectPerso
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-3rem)] max-w-md"
+            className="fixed inset-4 top-[10%] bottom-auto z-50 mx-auto max-w-md"
           >
-            <GlassCard variant="strong" chromium className="p-4 max-h-[70vh] flex flex-col">
+            <GlassCard variant="strong" chromium className="p-4 border border-white/10 rounded-2xl">
               {/* Header */}
               <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <h3 className="font-medium text-foreground">Select Persona</h3>
@@ -50,8 +50,8 @@ export const PersonaPopup = ({ isOpen, onClose, selectedPersonaId, onSelectPerso
               </div>
 
               {/* Persona grid - scrollable */}
-              <div className="overflow-y-auto flex-1 min-h-0 pr-1" style={{ maxHeight: '50vh' }}>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="overflow-y-auto max-h-[60vh] pr-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pb-2">
                   {PERSONAS.map((persona) => {
                     const Icon = persona.icon;
                     return (

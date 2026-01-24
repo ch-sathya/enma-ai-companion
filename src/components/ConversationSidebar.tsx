@@ -125,7 +125,7 @@ export const ConversationSidebar = ({
           </div>
 
           {/* User section */}
-          <div className="px-4 py-4 border-t border-white/5 safe-bottom">
+          <div className="px-4 py-4 pb-6 border-t border-white/5 mb-safe">
             {user ? (
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-foreground">

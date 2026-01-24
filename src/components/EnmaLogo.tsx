@@ -27,6 +27,10 @@ export const EnmaLogo = ({ size = "md", showIcon = true }: EnmaLogoProps) => {
           src="/enma-logo.png"
           alt="Enma"
           className={`${iconSizes[size]} object-contain transition-transform duration-300 group-hover:rotate-12`}
+          style={{ 
+            filter: 'brightness(0.95) contrast(1.05)',
+            mixBlendMode: 'normal'
+          }}
         />
       )}
       <span

@@ -52,9 +52,9 @@ export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: Mo
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed left-1/2 top-[40%] -translate-x-1/2 -translate-y-1/2 z-50 w-[calc(100%-3rem)] max-w-sm"
+            className="fixed inset-4 top-[10%] bottom-auto z-50 mx-auto max-w-sm"
           >
-            <GlassCard variant="strong" chromium className="p-4 max-h-[80vh] flex flex-col">
+            <GlassCard variant="strong" chromium className="p-4 border border-white/10 rounded-2xl">
               {/* Header */}
               <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <div className="flex items-center gap-2">
@@ -70,8 +70,8 @@ export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: Mo
               </div>
 
               {/* Model list - scrollable */}
-              <div className="overflow-y-auto flex-1 min-h-0 pr-1" style={{ maxHeight: '50vh' }}>
-                <div className="space-y-2">
+              <div className="overflow-y-auto max-h-[60vh] pr-1">
+                <div className="space-y-2 pb-2">
                   {MODELS.map((model) => (
                     <button
                       key={model.id}
