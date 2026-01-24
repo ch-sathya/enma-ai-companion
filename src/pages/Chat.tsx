@@ -151,6 +151,11 @@ export const Chat = () => {
           sidebarOpen ? "md:ml-[280px]" : ""
         }`}
       >
+        {/* Header for mobile */}
+        <div className="h-14 flex-shrink-0 flex items-center justify-center border-b border-white/5 md:hidden safe-top">
+          <EnmaLogo size="sm" />
+        </div>
+
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto">
           {messages.length === 0 ? (
