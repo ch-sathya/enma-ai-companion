@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Check, Cpu } from "lucide-react";
+import { X, Check, Cpu, Settings2, ChevronDown, ChevronUp } from "lucide-react";
 import { GlassCard } from "./GlassCard";
+import { ModelSettings } from "./ModelSettings";
 
 interface Model {
   id: string;
@@ -25,9 +27,28 @@ interface ModelPopupProps {
   onClose: () => void;
   selectedModel: string;
   onSelectModel: (modelId: string) => void;
+  temperature: number;
+  topP: number;
+  maxTokens: number;
+  onTemperatureChange: (value: number) => void;
+  onTopPChange: (value: number) => void;
+  onMaxTokensChange: (value: number) => void;
 }
 
-export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: ModelPopupProps) => {
+export const ModelPopup = ({
+  isOpen,
+  onClose,
+  selectedModel,
+  onSelectModel,
+  temperature,
+  topP,
+  maxTokens,
+  onTemperatureChange,
+  onTopPChange,
+  onMaxTokensChange,
+}: ModelPopupProps) => {
+  const [showSettings, setShowSettings] = useState(false);
+
   const handleSelect = (modelId: string) => {
     onSelectModel(modelId);
     onClose();
@@ -70,7 +91,7 @@ export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: Mo
               </div>
 
               {/* Model list - scrollable */}
-              <div className="overflow-y-auto max-h-[60vh] pr-1">
+              <div className="overflow-y-auto max-h-[40vh] pr-1">
                 <div className="space-y-2 pb-2">
                   {MODELS.map((model) => (
                     <button
@@ -93,6 +114,46 @@ export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: Mo
                   ))}
                 </div>
               </div>
+
+              {/* Fine-tune Settings Toggle */}
+              <button
+                onClick={() => setShowSettings(!showSettings)}
+                className="w-full flex items-center justify-between p-3 mt-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border-t border-white/5"
+              >
+                <div className="flex items-center gap-2">
+                  <Settings2 size={14} className="text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Fine-tune Settings</span>
+                </div>
+                {showSettings ? (
+                  <ChevronUp size={14} className="text-muted-foreground" />
+                ) : (
+                  <ChevronDown size={14} className="text-muted-foreground" />
+                )}
+              </button>
+
+              {/* Settings Panel */}
+              <AnimatePresence>
+                {showSettings && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="pt-2 px-1">
+                      <ModelSettings
+                        temperature={temperature}
+                        topP={topP}
+                        maxTokens={maxTokens}
+                        onTemperatureChange={onTemperatureChange}
+                        onTopPChange={onTopPChange}
+                        onMaxTokensChange={onMaxTokensChange}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </GlassCard>
           </motion.div>
         </>

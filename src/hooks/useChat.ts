@@ -1,10 +1,18 @@
 import { useState, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { AttachedFile } from "@/components/FileAttachment";
+
+interface Attachment {
+  url: string;
+  type: string;
+  name: string;
+}
 
 interface Message {
   id: string;
   role: "user" | "assistant";
   content: string;
+  attachments?: Attachment[];
 }
 
 interface ChatSettings {
@@ -37,6 +45,7 @@ export const useChat = (conversationId: string | null, settings: ChatSettings) =
             id: m.id,
             role: m.role as "user" | "assistant",
             content: m.content,
+            attachments: (m.attachments as unknown as Attachment[]) || [],
           }))
       );
     }
@@ -45,7 +54,8 @@ export const useChat = (conversationId: string | null, settings: ChatSettings) =
   const saveMessage = async (
     role: "user" | "assistant",
     content: string,
-    convId: string
+    convId: string,
+    attachments?: Attachment[]
   ) => {
     const { data, error } = await supabase
       .from("messages")
@@ -53,6 +63,7 @@ export const useChat = (conversationId: string | null, settings: ChatSettings) =
         conversation_id: convId,
         role,
         content,
+        attachments: (attachments || []) as unknown as Record<string, unknown>,
       })
       .select()
       .single();
@@ -60,23 +71,102 @@ export const useChat = (conversationId: string | null, settings: ChatSettings) =
     return data;
   };
 
+  const uploadAttachments = useCallback(
+    async (files: AttachedFile[]): Promise<Attachment[]> => {
+      const uploaded: Attachment[] = [];
+
+      for (const file of files) {
+        const fileName = `${Date.now()}-${file.file.name}`;
+        const { data, error } = await supabase.storage
+          .from("chat-attachments")
+          .upload(fileName, file.file);
+
+        if (error) {
+          console.error("Error uploading file:", error);
+          continue;
+        }
+
+        const { data: urlData } = supabase.storage
+          .from("chat-attachments")
+          .getPublicUrl(data.path);
+
+        uploaded.push({
+          url: urlData.publicUrl,
+          type: file.type,
+          name: file.file.name,
+        });
+      }
+
+      return uploaded;
+    },
+    []
+  );
+
   const sendMessage = useCallback(
-    async (content: string, convId: string) => {
-      if (!content.trim() || isLoading) return;
+    async (content: string, convId: string, attachments?: AttachedFile[]) => {
+      if (!content.trim() && (!attachments || attachments.length === 0)) return;
+      if (isLoading) return;
+
+      setIsLoading(true);
+
+      // Upload attachments first
+      let uploadedAttachments: Attachment[] = [];
+      if (attachments && attachments.length > 0) {
+        uploadedAttachments = await uploadAttachments(attachments);
+      }
 
       // Add user message
       const userMsgId = crypto.randomUUID();
-      const userMsg: Message = { id: userMsgId, role: "user", content };
+      const userMsg: Message = { 
+        id: userMsgId, 
+        role: "user", 
+        content,
+        attachments: uploadedAttachments,
+      };
       setMessages((prev) => [...prev, userMsg]);
-      setIsLoading(true);
 
       // Save user message
-      await saveMessage("user", content, convId);
+      await saveMessage("user", content, convId, uploadedAttachments);
 
-      // Prepare messages for API
+      // Prepare messages for API - handle multimodal content
       const apiMessages = [
-        ...messages.map((m) => ({ role: m.role, content: m.content })),
-        { role: "user" as const, content },
+        ...messages.map((m) => {
+          if (m.attachments && m.attachments.length > 0) {
+            const contentParts: any[] = [];
+            if (m.content) {
+              contentParts.push({ type: "text", text: m.content });
+            }
+            for (const att of m.attachments) {
+              if (att.type === "image") {
+                contentParts.push({
+                  type: "image_url",
+                  image_url: { url: att.url },
+                });
+              }
+            }
+            return { role: m.role, content: contentParts.length > 0 ? contentParts : m.content };
+          }
+          return { role: m.role, content: m.content };
+        }),
+        // Add current message
+        (() => {
+          if (uploadedAttachments.length > 0) {
+            const contentParts: any[] = [];
+            if (content) {
+              contentParts.push({ type: "text", text: content });
+            }
+            for (const att of uploadedAttachments) {
+              if (att.type === "image") {
+                contentParts.push({
+                  type: "image_url",
+                  image_url: { url: att.url },
+                });
+              }
+            }
+            return { role: "user" as const, content: contentParts.length > 0 ? contentParts : content };
+          }
+          return { role: "user" as const, content };
+        })(),
       ];
 
       // Create abort controller
@@ -178,7 +268,7 @@ export const useChat = (conversationId: string | null, settings: ChatSettings) =
         abortControllerRef.current = null;
       }
     },
-    [messages, settings, isLoading]
+    [messages, settings, isLoading, uploadAttachments]
   );
 
   const stopGeneration = useCallback(() => {

@@ -14,8 +14,9 @@ import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { getPersonaById, Persona } from "@/data/personas";
-import { Sparkles, PanelLeft, PanelLeftClose } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { MessageSkeleton } from "@/components/MessageSkeleton";
+import { AttachedFile } from "@/components/FileAttachment";
 
 interface Settings {
   model: string;
@@ -25,6 +26,8 @@ interface Settings {
   maxTokens: number;
 }
 
+const SETTINGS_KEY = "enma-chat-settings";
+
 const DEFAULT_SETTINGS: Settings = {
   model: "google/gemini-3-flash-preview",
   personaId: "general",
@@ -33,10 +36,30 @@ const DEFAULT_SETTINGS: Settings = {
   maxTokens: 2048,
 };
 
+const loadSettings = (): Settings => {
+  try {
+    const stored = localStorage.getItem(SETTINGS_KEY);
+    if (stored) {
+      return { ...DEFAULT_SETTINGS, ...JSON.parse(stored) };
+    }
+  } catch {
+    // Ignore parse errors
+  }
+  return DEFAULT_SETTINGS;
+};
+
+const saveSettingsToStorage = (settings: Settings) => {
+  try {
+    localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+  } catch {
+    // Ignore storage errors
+  }
+};
+
 export const Chat = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [settings, setSettings] = useState<Settings>(loadSettings);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [modelPopupOpen, setModelPopupOpen] = useState(false);
   const [personaPopupOpen, setPersonaPopupOpen] = useState(false);
   const [authOpen, setAuthOpen] = useState(false);
@@ -65,6 +88,11 @@ export const Chat = () => {
   const { messages, isLoading, sendMessage, stopGeneration, loadMessages, clearMessages } =
     useChat(currentConversationId, chatSettings);
 
+  // Save settings when changed
+  useEffect(() => {
+    saveSettingsToStorage(settings);
+  }, [settings]);
+
   // Swipe gestures for mobile sidebar
   const openSidebar = useCallback(() => setSidebarOpen(true), []);
   const closeSidebar = useCallback(() => setSidebarOpen(false), []);
@@ -72,6 +100,7 @@ export const Chat = () => {
     onSwipeRight: openSidebar,
     onSwipeLeft: closeSidebar,
   });
+
   useEffect(() => {
     supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
@@ -99,7 +128,7 @@ export const Chat = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = async (content: string) => {
+  const handleSendMessage = async (content: string, attachments?: AttachedFile[]) => {
     let convId = currentConversationId;
 
     // Create new conversation if none exists
@@ -111,7 +140,7 @@ export const Chat = () => {
     }
 
     if (convId) {
-      await sendMessage(content, convId);
+      await sendMessage(content, convId, attachments);
 
       // Update title after first message
       if (messages.length === 0) {
@@ -133,8 +162,8 @@ export const Chat = () => {
     clearMessages();
   };
 
-  const handleSelectPersona = (persona: Persona) => {
-    setSettings(prev => ({ ...prev, personaId: persona.id }));
+  const handleSelectPersona = (newPersona: Persona) => {
+    setSettings(prev => ({ ...prev, personaId: newPersona.id }));
   };
 
   return (
@@ -159,21 +188,12 @@ export const Chat = () => {
           sidebarOpen ? "md:ml-[280px]" : ""
         }`}
       >
-        {/* Header */}
-        <div className="h-14 flex-shrink-0 flex items-center px-4 border-b border-white/5 safe-top">
-          {/* Toggle button */}
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center mr-2"
-            title={sidebarOpen ? "Close sidebar" : "Open sidebar"}
-          >
-            {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
-          </button>
-          {/* Only show logo when sidebar is closed on desktop, always show on mobile */}
-          <div className={sidebarOpen ? "md:hidden" : ""}>
+        {/* Header - minimal when sidebar is closed */}
+        {!sidebarOpen && (
+          <div className="h-14 flex-shrink-0 flex items-center justify-center px-4 border-b border-white/5 safe-top">
             <EnmaLogo size="sm" />
           </div>
-        </div>
+        )}
 
         {/* Messages area */}
         <div className="flex-1 overflow-y-auto">
@@ -228,6 +248,7 @@ export const Chat = () => {
                   key={message.id}
                   role={message.role}
                   content={message.content}
+                  attachments={message.attachments}
                   isStreaming={isLoading && index === messages.length - 1 && message.role === "assistant"}
                 />
               ))}
@@ -261,6 +282,12 @@ export const Chat = () => {
         onClose={() => setModelPopupOpen(false)}
         selectedModel={settings.model}
         onSelectModel={(model) => setSettings(prev => ({ ...prev, model }))}
+        temperature={settings.temperature}
+        topP={settings.topP}
+        maxTokens={settings.maxTokens}
+        onTemperatureChange={(temperature) => setSettings(prev => ({ ...prev, temperature }))}
+        onTopPChange={(topP) => setSettings(prev => ({ ...prev, topP }))}
+        onMaxTokensChange={(maxTokens) => setSettings(prev => ({ ...prev, maxTokens }))}
       />
 
       {/* Persona popup */}

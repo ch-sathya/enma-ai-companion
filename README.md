@@ -1,6 +1,6 @@
 # Enma - AI Assistant Platform
 
-A sleek, privacy-focused interface for open-source language models. Features a stunning black & white glassmorphism design with support for multiple AI models and customizable personas.
+A sleek, privacy-focused interface for open-source language models. Features a stunning black & white glassmorphism design with support for multiple AI models, customizable personas, and file attachments.
 
 ![Enma](public/enma-logo.svg)
 
@@ -8,6 +8,8 @@ A sleek, privacy-focused interface for open-source language models. Features a s
 
 - 🤖 **Multiple Models** - Switch between Gemini, GPT-5, and more
 - 🎭 **Personas** - Specialized modes for coding, creative writing, analysis, tutoring, and more
+- 🎛️ **Fine-tuning** - Adjust temperature, top-p, and max tokens for precise control
+- 📎 **File Attachments** - Upload images, PDFs, and documents for AI analysis
 - 🌊 **Real-time Streaming** - Watch AI responses flow in real-time
 - 💾 **Conversation History** - Automatic saving with session persistence
 - 🎨 **Elegant UI** - Pure black & white glassmorphism design
@@ -19,11 +21,9 @@ A sleek, privacy-focused interface for open-source language models. Features a s
 
 ### Prerequisites
 - Node.js 18+ ([install with nvm](https://github.com/nvm-sh/nvm))
-- npm or bun
+- npm, bun, or yarn
 
-### Frontend Only (Demo Mode)
-
-Run the app without a backend connection. AI responses will be simulated.
+### Quick Start
 
 ```bash
 # 1. Clone the repository
@@ -32,6 +32,7 @@ cd <YOUR_PROJECT_NAME>
 
 # 2. Install dependencies
 npm install
+# or: bun install
 
 # 3. Start development server
 npm run dev
@@ -40,14 +41,54 @@ npm run dev
 open http://localhost:5173
 ```
 
-> **Note:** In demo mode, the app works with simulated AI responses. For real AI functionality, deploy via Lovable Cloud.
+### Environment Setup
 
-### With Full Backend
+For local development with backend features, create a `.env.local` file:
 
-Deploy the project via [Lovable](https://lovable.dev) to enable:
-- Real AI model responses (Gemini, GPT-5, etc.)
-- User authentication
-- Persistent conversation storage
+```env
+VITE_SUPABASE_URL=https://vypytimuqtvsyjthkeam.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key
+```
+
+> **Note:** In demo mode (without backend), the app works with simulated AI responses. Deploy via Lovable Cloud for real AI functionality.
+
+---
+
+## Model Fine-Tuning
+
+Enma includes a settings panel to adjust AI model behavior:
+
+| Setting | Range | Description |
+|---------|-------|-------------|
+| **Temperature** | 0.0 - 2.0 | Controls randomness. Lower = focused, higher = creative |
+| **Top P** | 0.0 - 1.0 | Nucleus sampling. Lower = more deterministic |
+| **Max Tokens** | 256 - 8192 | Maximum response length |
+
+### Accessing Settings
+1. Click the model chip in the chat input (e.g., "G3-flash")
+2. Click "Fine-tune Settings" to expand the panel
+3. Adjust sliders as needed
+
+Settings persist locally in your browser.
+
+---
+
+## File Attachments
+
+Enma supports uploading files for AI analysis:
+
+| Type | Extensions | Max Size | AI Processing |
+|------|------------|----------|---------------|
+| Images | jpg, png, webp, gif | 10MB | Vision analysis |
+| Documents | pdf | 10MB | Context extraction |
+| Text | txt, md | 5MB | Include in context |
+| Office | doc, docx | 10MB | Text extraction |
+
+### How to Attach Files
+1. Click the "Attach" button (📎) in the chat input
+2. Select one or more files
+3. Files appear as chips above the text input
+4. Send your message with the attached files
 
 ---
 
@@ -129,7 +170,9 @@ npm run electron:build
 │   ├── components/     # React components
 │   │   ├── ChatInput.tsx
 │   │   ├── ChatMessage.tsx
+│   │   ├── FileAttachment.tsx
 │   │   ├── ModelPopup.tsx
+│   │   ├── ModelSettings.tsx
 │   │   ├── PersonaPopup.tsx
 │   │   └── ...
 │   ├── data/

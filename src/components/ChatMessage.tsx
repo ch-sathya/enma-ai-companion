@@ -2,19 +2,33 @@ import { motion } from "framer-motion";
 import ReactMarkdown from "react-markdown";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { Copy, Check, User, Sparkles, RefreshCw, Pencil } from "lucide-react";
+import { Copy, Check, User, RefreshCw, Pencil, FileText, File } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+
+interface Attachment {
+  url: string;
+  type: string;
+  name: string;
+}
 
 interface ChatMessageProps {
   role: "user" | "assistant";
   content: string;
+  attachments?: Attachment[];
   isStreaming?: boolean;
   onRegenerate?: () => void;
   onEdit?: () => void;
 }
 
-export const ChatMessage = ({ role, content, isStreaming, onRegenerate, onEdit }: ChatMessageProps) => {
+export const ChatMessage = ({ 
+  role, 
+  content, 
+  attachments,
+  isStreaming, 
+  onRegenerate, 
+  onEdit 
+}: ChatMessageProps) => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const copyToClipboard = async (code: string) => {
@@ -24,6 +38,44 @@ export const ChatMessage = ({ role, content, isStreaming, onRegenerate, onEdit }
   };
 
   const isUser = role === "user";
+
+  const renderAttachments = () => {
+    if (!attachments || attachments.length === 0) return null;
+
+    return (
+      <div className="flex flex-wrap gap-2 mb-2">
+        {attachments.map((att, index) => (
+          <div key={index}>
+            {att.type === "image" ? (
+              <a href={att.url} target="_blank" rel="noopener noreferrer">
+                <img
+                  src={att.url}
+                  alt={att.name}
+                  className="max-w-[200px] max-h-[150px] rounded-lg object-cover border border-white/10 hover:border-white/20 transition-colors"
+                />
+              </a>
+            ) : (
+              <a
+                href={att.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+              >
+                {att.type === "pdf" ? (
+                  <FileText size={16} className="text-muted-foreground" />
+                ) : (
+                  <File size={16} className="text-muted-foreground" />
+                )}
+                <span className="text-sm text-foreground truncate max-w-[150px]">
+                  {att.name}
+                </span>
+              </a>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   return (
     <motion.div
@@ -45,7 +97,10 @@ export const ChatMessage = ({ role, content, isStreaming, onRegenerate, onEdit }
       )}
 
       {/* Message content */}
-      <div className={cn("flex-1 max-w-[80%]", isUser ? "flex justify-end" : "")}>
+      <div className={cn("flex-1 max-w-[80%]", isUser ? "flex flex-col items-end" : "")}>
+        {/* Attachments */}
+        {renderAttachments()}
+
         <div
           className={cn(
             "rounded-2xl px-4 py-3",
