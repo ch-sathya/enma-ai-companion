@@ -351,7 +351,7 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
   }, [stopListening]);
 
   // Speak text using browser's built-in Speech Synthesis API
-  // Use chunking for longer text to prevent synthesis errors
+  // Improved chunking and voice selection for more natural, less stuttering speech
   const speak = useCallback(
     (text: string) => {
       if (!voiceEnabled || !text.trim() || !isTTSSupported) return;
@@ -361,11 +361,18 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
 
       setIsSpeaking(true);
 
-      // Split text into smaller chunks for more natural, continuous speech
-      // Browsers have limits on utterance length which can cause errors
-      const chunkText = (text: string, maxLength = 150): string[] => {
+      // Improved chunking - split at natural pauses for smoother speech
+      const chunkText = (text: string, maxLength = 100): string[] => {
         const chunks: string[] = [];
-        const sentences = text.split(/(?<=[.!?])\s+/);
+        
+        // Clean text for better TTS
+        const cleanText = text
+          .replace(/\n+/g, '. ')
+          .replace(/\s+/g, ' ')
+          .trim();
+        
+        // Split by sentences first
+        const sentences = cleanText.split(/(?<=[.!?])\s+/);
         let currentChunk = "";
 
         for (const sentence of sentences) {
@@ -393,26 +400,35 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
 
         const utterance = new SpeechSynthesisUtterance(chunks[currentIndex]);
 
-        // Find a high-quality voice
+        // Find a high-quality voice with improved selection
         const getPreferredVoice = () => {
           if (preferredVoice && availableVoices.length > 0) {
             const found = availableVoices.find(v => v.name === preferredVoice);
             if (found) return found;
           }
           
-          // Prefer natural/enhanced voices for better quality
-          const naturalVoice = availableVoices.find(v => 
-            v.name.toLowerCase().includes('natural') ||
-            v.name.toLowerCase().includes('enhanced') ||
-            v.name.toLowerCase().includes('premium')
-          );
-          if (naturalVoice) return naturalVoice;
+          // Priority order for natural-sounding voices
+          const qualityKeywords = ['neural', 'natural', 'premium', 'enhanced', 'wavenet'];
+          
+          // Try each quality level
+          for (const keyword of qualityKeywords) {
+            const voice = availableVoices.find(v => 
+              v.name.toLowerCase().includes(keyword)
+            );
+            if (voice) return voice;
+          }
 
           // Prefer Google voices as they tend to be higher quality
           const googleVoice = availableVoices.find(v => 
             v.name.toLowerCase().includes('google')
           );
           if (googleVoice) return googleVoice;
+
+          // Then Microsoft
+          const msVoice = availableVoices.find(v => 
+            v.name.toLowerCase().includes('microsoft')
+          );
+          if (msVoice) return msVoice;
 
           return availableVoices[0] || null;
         };
@@ -422,16 +438,16 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
           utterance.voice = selectedVoice;
         }
 
-        // Natural speech settings
-        utterance.rate = 0.95; // Slightly slower for more natural feel
+        // Optimized speech settings for less stuttering
+        utterance.rate = 0.88; // Slightly slower reduces stuttering
         utterance.pitch = 1.0;
         utterance.volume = 1.0;
 
         utterance.onend = () => {
           currentIndex++;
-          // Small pause between chunks for natural flow
+          // Natural pause between chunks
           if (currentIndex < chunks.length) {
-            setTimeout(speakChunk, 50);
+            setTimeout(speakChunk, 80);
           } else {
             setIsSpeaking(false);
           }
