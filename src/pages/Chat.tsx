@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
@@ -12,6 +12,7 @@ import { EnmaLogo } from "@/components/EnmaLogo";
 import { GlassCard } from "@/components/GlassCard";
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
+import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { getPersonaById, Persona } from "@/data/personas";
 import { Sparkles, PanelLeft, PanelLeftClose } from "lucide-react";
 import { MessageSkeleton } from "@/components/MessageSkeleton";
@@ -64,7 +65,13 @@ export const Chat = () => {
   const { messages, isLoading, sendMessage, stopGeneration, loadMessages, clearMessages } =
     useChat(currentConversationId, chatSettings);
 
-  // Auth state
+  // Swipe gestures for mobile sidebar
+  const openSidebar = useCallback(() => setSidebarOpen(true), []);
+  const closeSidebar = useCallback(() => setSidebarOpen(false), []);
+  useSwipeGesture({
+    onSwipeRight: openSidebar,
+    onSwipeLeft: closeSidebar,
+  });
   useEffect(() => {
     supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
@@ -154,7 +161,7 @@ export const Chat = () => {
       >
         {/* Header */}
         <div className="h-14 flex-shrink-0 flex items-center px-4 border-b border-white/5 safe-top">
-          {/* Toggle button - always visible beside logo */}
+          {/* Toggle button */}
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             className="p-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center mr-2"
@@ -162,7 +169,10 @@ export const Chat = () => {
           >
             {sidebarOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
           </button>
-          <EnmaLogo size="sm" />
+          {/* Only show logo when sidebar is closed on desktop, always show on mobile */}
+          <div className={sidebarOpen ? "md:hidden" : ""}>
+            <EnmaLogo size="sm" />
+          </div>
         </div>
 
         {/* Messages area */}
