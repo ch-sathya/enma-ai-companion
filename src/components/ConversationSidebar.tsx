@@ -1,7 +1,8 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Plus, Trash2, Menu, X, LogOut, User } from "lucide-react";
+import { MessageSquare, Plus, Trash2, Menu, X, LogOut, User, PanelLeftClose, PanelLeft } from "lucide-react";
 import { GlassCard } from "./GlassCard";
 import { EnmaLogo } from "./EnmaLogo";
+import { ConversationSkeleton } from "./MessageSkeleton";
 import { formatDistanceToNow } from "date-fns";
 
 interface Conversation {
@@ -21,6 +22,7 @@ interface ConversationSidebarProps {
   user: { email?: string } | null;
   onLogout: () => void;
   onLogin: () => void;
+  isLoading?: boolean;
 }
 
 export const ConversationSidebar = ({
@@ -34,9 +36,19 @@ export const ConversationSidebar = ({
   user,
   onLogout,
   onLogin,
+  isLoading = false,
 }: ConversationSidebarProps) => {
   return (
     <>
+      {/* Desktop toggle - always visible */}
+      <button
+        onClick={onToggle}
+        className="fixed top-4 left-4 z-50 p-2 rounded-lg glass hidden md:flex items-center justify-center hover:bg-white/10 transition-colors"
+        title={isOpen ? "Close sidebar" : "Open sidebar"}
+      >
+        {isOpen ? <PanelLeftClose size={20} /> : <PanelLeft size={20} />}
+      </button>
+
       {/* Mobile toggle */}
       <button
         onClick={onToggle}
@@ -85,43 +97,49 @@ export const ConversationSidebar = ({
 
           {/* Conversations list */}
           <div className="flex-1 overflow-y-auto px-4 pb-4">
-            <div className="space-y-1">
-              {conversations.map((conv) => (
-                <div
-                  key={conv.id}
-                  className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all ${
-                    currentConversationId === conv.id
-                      ? "bg-white/10 text-foreground"
-                      : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
-                  }`}
-                  onClick={() => onSelectConversation(conv.id)}
-                >
-                  <MessageSquare size={16} className="flex-shrink-0" />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm truncate">{conv.title}</p>
-                    <p className="text-xs text-muted-foreground/50">
-                      {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}
-                    </p>
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteConversation(conv.id);
-                    }}
-                    className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 text-muted-foreground hover:text-destructive transition-all"
+            {isLoading ? (
+              <ConversationSkeleton />
+            ) : (
+              <div className="space-y-1">
+                {conversations.map((conv) => (
+                  <motion.div
+                    key={conv.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all ${
+                      currentConversationId === conv.id
+                        ? "bg-white/10 text-foreground"
+                        : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
+                    }`}
+                    onClick={() => onSelectConversation(conv.id)}
                   >
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
+                    <MessageSquare size={16} className="flex-shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate">{conv.title}</p>
+                      <p className="text-xs text-muted-foreground/50">
+                        {formatDistanceToNow(new Date(conv.updated_at), { addSuffix: true })}
+                      </p>
+                    </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onDeleteConversation(conv.id);
+                      }}
+                      className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-white/10 text-muted-foreground hover:text-destructive transition-all"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </motion.div>
+                ))}
 
-              {conversations.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground/40">
-                  <MessageSquare size={24} className="mx-auto mb-2 opacity-50" />
-                  <p className="text-sm">No conversations yet</p>
-                </div>
-              )}
-            </div>
+                {conversations.length === 0 && (
+                  <div className="text-center py-8 text-muted-foreground/40">
+                    <MessageSquare size={24} className="mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">No conversations yet</p>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* User section */}
