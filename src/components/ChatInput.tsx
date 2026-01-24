@@ -50,6 +50,7 @@ export const ChatInput = ({
   const [input, setInput] = useState("");
   const [attachments, setAttachments] = useState<AttachedFile[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isFocused, setIsFocused] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropZoneRef = useRef<HTMLDivElement>(null);
@@ -226,7 +227,11 @@ export const ChatInput = ({
           )}
         </AnimatePresence>
 
-        <GlassCard variant="strong" chromium className="p-3">
+        <GlassCard 
+          variant="strong" 
+          chromium 
+          className={`p-3 transition-all duration-300 ${isFocused ? 'focus-glow' : ''}`}
+        >
           {/* Attachments preview */}
           <FileAttachment files={attachments} onRemove={handleRemoveAttachment} />
 
@@ -234,14 +239,14 @@ export const ChatInput = ({
           <div className="flex items-center gap-2 px-1 pb-2 border-b border-white/5 mb-2">
             <button
               onClick={onOpenModelPopup}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all hover-glow"
             >
               <Cpu size={12} />
               <span>{getModelDisplayName(selectedModel)}</span>
             </button>
             <button
               onClick={onOpenPersonaPopup}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all hover-glow"
             >
               <PersonaIcon size={12} />
               <span>{persona.name}</span>
@@ -250,7 +255,7 @@ export const ChatInput = ({
             {/* Attach button */}
             <button
               onClick={() => fileInputRef.current?.click()}
-              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all ml-auto"
+              className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-xs text-muted-foreground hover:text-foreground transition-all ml-auto hover-glow"
               title="Attach files (or drag & drop)"
             >
               <Paperclip size={12} />
@@ -272,6 +277,8 @@ export const ChatInput = ({
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={handleKeyDown}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
               placeholder="Message Enma... (paste images or drag files)"
               className="flex-1 bg-transparent resize-none outline-none text-foreground placeholder:text-muted-foreground/50 py-2 px-2 min-h-[40px] max-h-[200px]"
               rows={1}
@@ -291,7 +298,7 @@ export const ChatInput = ({
                 disabled={!input.trim() && attachments.length === 0}
                 className={`p-2.5 rounded-lg transition-all ${
                   input.trim() || attachments.length > 0
-                    ? "bg-foreground text-background hover:bg-foreground/90"
+                    ? "bg-foreground text-background hover:bg-foreground/90 btn-glow"
                     : "bg-white/5 text-muted-foreground cursor-not-allowed"
                 }`}
                 title="Send message"

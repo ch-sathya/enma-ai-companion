@@ -6,13 +6,17 @@ interface EnmaLogoProps {
   showIcon?: boolean;
   centered?: boolean;
   asLink?: boolean;
+  vertical?: boolean;
+  glow?: boolean;
 }
 
 export const EnmaLogo = ({ 
   size = "md", 
   showIcon = true, 
   centered = false,
-  asLink = true 
+  asLink = true,
+  vertical = false,
+  glow = false,
 }: EnmaLogoProps) => {
   const sizeClasses = {
     sm: "text-lg",
@@ -25,24 +29,29 @@ export const EnmaLogo = ({
     sm: "w-6 h-6",
     md: "w-8 h-8",
     lg: "w-12 h-12",
-    xl: "w-16 h-16",
+    xl: "w-20 h-20",
   };
 
   const content = (
     <>
       {showIcon && (
-        <img
-          src="/enma-logo.png"
-          alt="Enma"
-          className={cn(
-            iconSizes[size],
-            "object-contain transition-transform duration-300 group-hover:rotate-12"
-          )}
-          style={{ 
-            filter: 'brightness(0.95) contrast(1.05)',
-            mixBlendMode: 'normal'
-          }}
-        />
+        <div className={cn(
+          "relative transition-transform duration-500 group-hover:rotate-12",
+          glow && "after:absolute after:inset-0 after:rounded-full after:bg-white/20 after:blur-xl after:scale-150 after:opacity-50"
+        )}>
+          <img
+            src="/enma-logo.png"
+            alt="Enma"
+            className={cn(
+              iconSizes[size],
+              "object-contain relative z-10"
+            )}
+            style={{ 
+              filter: 'brightness(0.95) contrast(1.05)',
+              mixBlendMode: 'normal'
+            }}
+          />
+        </div>
       )}
       <span
         className={cn(
@@ -56,7 +65,8 @@ export const EnmaLogo = ({
   );
 
   const className = cn(
-    "flex items-center gap-2 group",
+    "flex items-center group",
+    vertical ? "flex-col gap-4" : "gap-2",
     centered && "justify-center"
   );
 

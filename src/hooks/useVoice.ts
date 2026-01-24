@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
+import { toast } from "sonner";
 
 // Type declarations for Web Speech API
 interface SpeechRecognitionEvent extends Event {
@@ -63,7 +64,7 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
     onWakeWord,
     wakeWordEnabled = false,
     voiceEnabled = true,
-    preferredVoice = "EXAVITQu4vr4xnSDxMaL",
+    preferredVoice = "",
   } = options;
 
   const [isListening, setIsListening] = useState(false);
@@ -71,10 +72,12 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
   const [isWakeWordMode, setIsWakeWordMode] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [availableVoices, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   const recognitionRef = useRef<SpeechRecognitionInstance | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-  const audioUrlRef = useRef<string | null>(null);
+  const retryCountRef = useRef(0);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const MAX_RETRIES = 3;
 
   // Check for Speech Recognition support
   const SpeechRecognitionAPI =
@@ -83,6 +86,25 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
       : null;
 
   const isSupported = !!SpeechRecognitionAPI;
+  const isTTSSupported = typeof window !== "undefined" && "speechSynthesis" in window;
+
+  // Load available browser voices
+  useEffect(() => {
+    if (!isTTSSupported) return;
+
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+      setAvailableVoices(englishVoices.length > 0 ? englishVoices : voices);
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, [isTTSSupported]);
 
   // Request microphone permission
   const requestPermission = useCallback(async () => {
@@ -134,7 +156,6 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
           onWakeWord?.();
           setIsWakeWordMode(false);
           setTranscript("");
-          // Keep listening for the actual command
         }
       } else if (finalTranscript && onTranscript) {
         onTranscript(finalTranscript.trim());
@@ -144,16 +165,51 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
 
     recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
       console.error("Speech recognition error:", event.error);
+      
       if (event.error === "not-allowed") {
         setHasPermission(false);
+        setIsListening(false);
+        toast.error("Microphone access denied. Please allow microphone access.");
+        return;
       }
+
+      // Retry on network errors with exponential backoff
+      if (event.error === "network" && retryCountRef.current < MAX_RETRIES) {
+        const delay = Math.pow(2, retryCountRef.current) * 1000;
+        retryCountRef.current++;
+        
+        console.log(`Retrying speech recognition in ${delay}ms (attempt ${retryCountRef.current}/${MAX_RETRIES})`);
+        
+        retryTimeoutRef.current = setTimeout(() => {
+          if (recognitionRef.current) {
+            try {
+              recognitionRef.current.start();
+            } catch {
+              // Already running or other error
+            }
+          }
+        }, delay);
+        return;
+      }
+
+      if (event.error === "network") {
+        toast.error("Speech recognition unavailable. Please check your connection.");
+      }
+
       setIsListening(false);
     };
 
     recognition.onend = () => {
+      // Reset retry count on successful recognition session
+      retryCountRef.current = 0;
+      
       // Restart if in wake word mode or still supposed to be listening
       if (isWakeWordMode && wakeWordEnabled) {
-        recognition.start();
+        try {
+          recognition.start();
+        } catch {
+          // Already running
+        }
       } else {
         setIsListening(false);
       }
@@ -164,10 +220,16 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
 
   // Start listening
   const startListening = useCallback(async () => {
-    if (!isSupported) return;
+    if (!isSupported) {
+      toast.error("Speech recognition is not supported in your browser.");
+      return;
+    }
 
     const hasPermissionNow = hasPermission ?? (await requestPermission());
     if (!hasPermissionNow) return;
+
+    // Reset retry count
+    retryCountRef.current = 0;
 
     initRecognition();
     if (recognitionRef.current) {
@@ -177,12 +239,20 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
         setTranscript("");
       } catch (error) {
         console.error("Failed to start recognition:", error);
+        toast.error("Failed to start voice recognition.");
       }
     }
   }, [isSupported, hasPermission, requestPermission, initRecognition]);
 
   // Stop listening
   const stopListening = useCallback(() => {
+    // Clear any pending retries
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    retryCountRef.current = 0;
+
     if (recognitionRef.current) {
       recognitionRef.current.stop();
       setIsListening(false);
@@ -212,86 +282,54 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
     stopListening();
   }, [stopListening]);
 
-  // Speak text using ElevenLabs TTS
+  // Speak text using browser's built-in Speech Synthesis API (FREE)
   const speak = useCallback(
-    async (text: string) => {
-      if (!voiceEnabled || !text.trim()) return;
+    (text: string) => {
+      if (!voiceEnabled || !text.trim() || !isTTSSupported) return;
 
-      // Stop any current audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      if (audioUrlRef.current) {
-        URL.revokeObjectURL(audioUrlRef.current);
-        audioUrlRef.current = null;
-      }
+      // Cancel any ongoing speech
+      window.speechSynthesis.cancel();
 
       setIsSpeaking(true);
 
-      try {
-        const response = await fetch(
-          `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/elevenlabs-tts`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-            },
-            body: JSON.stringify({
-              text,
-              voiceId: preferredVoice,
-            }),
-          }
-        );
-
-        if (!response.ok) {
-          throw new Error("Failed to generate speech");
+      const utterance = new SpeechSynthesisUtterance(text);
+      
+      // Find the preferred voice or use default
+      if (preferredVoice && availableVoices.length > 0) {
+        const voice = availableVoices.find(v => v.name === preferredVoice);
+        if (voice) {
+          utterance.voice = voice;
         }
-
-        const audioBlob = await response.blob();
-        const audioUrl = URL.createObjectURL(audioBlob);
-        audioUrlRef.current = audioUrl;
-
-        const audio = new Audio(audioUrl);
-        audioRef.current = audio;
-
-        audio.onended = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
-          audioUrlRef.current = null;
-          audioRef.current = null;
-        };
-
-        audio.onerror = () => {
-          setIsSpeaking(false);
-          URL.revokeObjectURL(audioUrl);
-          audioUrlRef.current = null;
-          audioRef.current = null;
-        };
-
-        await audio.play();
-      } catch (error) {
-        console.error("TTS Error:", error);
-        setIsSpeaking(false);
+      } else if (availableVoices.length > 0) {
+        // Use first available English voice as default
+        utterance.voice = availableVoices[0];
       }
+
+      utterance.rate = 1.0;
+      utterance.pitch = 1.0;
+      utterance.volume = 1.0;
+
+      utterance.onend = () => {
+        setIsSpeaking(false);
+      };
+
+      utterance.onerror = (event) => {
+        console.error("Speech synthesis error:", event);
+        setIsSpeaking(false);
+      };
+
+      window.speechSynthesis.speak(utterance);
     },
-    [voiceEnabled, preferredVoice]
+    [voiceEnabled, preferredVoice, availableVoices, isTTSSupported]
   );
 
   // Stop speaking
   const stopSpeaking = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    if (audioUrlRef.current) {
-      URL.revokeObjectURL(audioUrlRef.current);
-      audioUrlRef.current = null;
+    if (isTTSSupported) {
+      window.speechSynthesis.cancel();
     }
     setIsSpeaking(false);
-  }, []);
+  }, [isTTSSupported]);
 
   // Cleanup on unmount
   useEffect(() => {
@@ -299,14 +337,14 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
       if (recognitionRef.current) {
         recognitionRef.current.stop();
       }
-      if (audioRef.current) {
-        audioRef.current.pause();
+      if (retryTimeoutRef.current) {
+        clearTimeout(retryTimeoutRef.current);
       }
-      if (audioUrlRef.current) {
-        URL.revokeObjectURL(audioUrlRef.current);
+      if (isTTSSupported) {
+        window.speechSynthesis.cancel();
       }
     };
-  }, []);
+  }, [isTTSSupported]);
 
   return {
     isListening,
@@ -315,6 +353,8 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
     transcript,
     hasPermission,
     isSupported,
+    isTTSSupported,
+    availableVoices,
     startListening,
     stopListening,
     toggleListening,

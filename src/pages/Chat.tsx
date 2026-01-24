@@ -338,7 +338,8 @@ export const Chat = () => {
                     >
                       <GlassCard
                         variant="subtle"
-                        className="p-4 hover:bg-white/5 transition-colors cursor-pointer"
+                        glow
+                        className="p-4 prompt-card cursor-pointer"
                       >
                         <div className="flex items-center gap-2">
                           <Sparkles size={14} className="text-muted-foreground" />

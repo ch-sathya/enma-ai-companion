@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, User, Volume2, Mic, Check } from "lucide-react";
+import { X, User, Volume2, Mic, Check, Play } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -14,13 +14,6 @@ interface SettingsPopupProps {
   onSave: (updates: Partial<UserPreferences>) => Promise<void>;
 }
 
-const VOICES = [
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah", description: "Warm & natural" },
-  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George", description: "Deep & calm" },
-  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily", description: "Soft & friendly" },
-  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel", description: "Professional" },
-];
-
 export const SettingsPopup = ({
   isOpen,
   onClose,
@@ -33,6 +26,27 @@ export const SettingsPopup = ({
   const [preferredVoice, setPreferredVoice] = useState(preferences.preferred_voice);
   const [isSaving, setIsSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
+  const [isPreviewPlaying, setIsPreviewPlaying] = useState<string | null>(null);
+
+  // Load browser voices
+  useEffect(() => {
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      // Filter to English voices and limit to most useful ones
+      const englishVoices = voices.filter(v => v.lang.startsWith('en'));
+      setBrowserVoices(englishVoices.length > 0 ? englishVoices.slice(0, 8) : voices.slice(0, 8));
+    };
+
+    loadVoices();
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+    };
+  }, []);
 
   useEffect(() => {
     setDisplayName(preferences.display_name || "");
@@ -52,6 +66,33 @@ export const SettingsPopup = ({
     setIsSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const previewVoice = (voiceName: string) => {
+    if (!("speechSynthesis" in window)) return;
+
+    window.speechSynthesis.cancel();
+    setIsPreviewPlaying(voiceName);
+
+    const utterance = new SpeechSynthesisUtterance("Hello! I'm Enma, your AI assistant.");
+    const voice = browserVoices.find(v => v.name === voiceName);
+    if (voice) {
+      utterance.voice = voice;
+    }
+    utterance.rate = 1.0;
+    utterance.pitch = 1.0;
+
+    utterance.onend = () => setIsPreviewPlaying(null);
+    utterance.onerror = () => setIsPreviewPlaying(null);
+
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const getVoiceDescription = (voice: SpeechSynthesisVoice): string => {
+    if (voice.name.toLowerCase().includes("female")) return "Female voice";
+    if (voice.name.toLowerCase().includes("male")) return "Male voice";
+    if (voice.localService) return "Offline capable";
+    return voice.lang;
   };
 
   return (
@@ -121,7 +162,7 @@ export const SettingsPopup = ({
                     <div>
                       <Label className="text-foreground">Voice Responses</Label>
                       <p className="text-xs text-muted-foreground">
-                        Enma speaks responses aloud
+                        Enma speaks responses aloud (free, uses browser)
                       </p>
                     </div>
                     <Switch
@@ -148,7 +189,7 @@ export const SettingsPopup = ({
                   </div>
 
                   {/* Voice Selection */}
-                  {voiceEnabled && (
+                  {voiceEnabled && browserVoices.length > 0 && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
@@ -156,27 +197,52 @@ export const SettingsPopup = ({
                       className="space-y-2"
                     >
                       <Label className="text-foreground">Enma's Voice</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {VOICES.map((voice) => (
+                      <p className="text-xs text-muted-foreground mb-2">
+                        Click the play button to preview each voice
+                      </p>
+                      <div className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto pr-1">
+                        {browserVoices.map((voice) => (
                           <button
-                            key={voice.id}
-                            onClick={() => setPreferredVoice(voice.id)}
-                            className={`p-3 rounded-lg border text-left transition-all ${
-                              preferredVoice === voice.id
+                            key={voice.name}
+                            onClick={() => setPreferredVoice(voice.name)}
+                            className={`p-3 rounded-lg border text-left transition-all flex items-center justify-between gap-2 ${
+                              preferredVoice === voice.name
                                 ? "border-primary bg-primary/10"
                                 : "border-white/10 bg-white/5 hover:bg-white/10"
                             }`}
                           >
-                            <div className="font-medium text-sm text-foreground">
-                              {voice.name}
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium text-sm text-foreground truncate">
+                                {voice.name.replace(/Microsoft |Google |Apple /, '')}
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                {getVoiceDescription(voice)}
+                              </div>
                             </div>
-                            <div className="text-xs text-muted-foreground">
-                              {voice.description}
-                            </div>
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                previewVoice(voice.name);
+                              }}
+                              className={`p-2 rounded-lg transition-all ${
+                                isPreviewPlaying === voice.name
+                                  ? "bg-primary text-primary-foreground animate-pulse"
+                                  : "bg-white/10 hover:bg-white/20 text-foreground"
+                              }`}
+                              title="Preview voice"
+                            >
+                              <Play size={14} />
+                            </button>
                           </button>
                         ))}
                       </div>
                     </motion.div>
+                  )}
+
+                  {voiceEnabled && browserVoices.length === 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      Loading available voices...
+                    </p>
                   )}
                 </div>
               </div>

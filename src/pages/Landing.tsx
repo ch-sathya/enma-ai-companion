@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Sparkles } from "lucide-react";
 import { EnmaLogo } from "@/components/EnmaLogo";
 import { GlassCard } from "@/components/GlassCard";
 
@@ -28,9 +28,25 @@ export const Landing = () => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden safe-top safe-bottom">
-      {/* Subtle background gradient */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-white/[0.02] rounded-full blur-[100px]" />
+      {/* Ambient glow orbs */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div 
+          className="ambient-orb w-[400px] h-[400px] bg-white/[0.03] top-1/4 left-1/4"
+          style={{ animationDelay: '0s' }}
+        />
+        <div 
+          className="ambient-orb w-[300px] h-[300px] bg-white/[0.02] bottom-1/4 right-1/4"
+          style={{ animationDelay: '-5s' }}
+        />
+        <div 
+          className="ambient-orb w-[200px] h-[200px] bg-white/[0.025] top-1/2 right-1/3"
+          style={{ animationDelay: '-10s' }}
+        />
+      </div>
+
+      {/* Central glow */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-radial from-white/[0.05] via-transparent to-transparent rounded-full blur-3xl" />
       </div>
 
       {/* Main content */}
@@ -40,10 +56,15 @@ export const Landing = () => {
         transition={{ duration: 0.8 }}
         className="text-center z-10 max-w-3xl mx-auto"
       >
-        {/* Logo - Centered */}
-        <div className="flex justify-center mb-12">
-          <EnmaLogo size="xl" centered asLink={false} />
-        </div>
+        {/* Logo - Vertical centered layout */}
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1, duration: 0.8 }}
+          className="flex justify-center mb-8"
+        >
+          <EnmaLogo size="xl" centered vertical asLink={false} glow />
+        </motion.div>
 
         {/* Tagline */}
         <motion.p
@@ -63,8 +84,9 @@ export const Landing = () => {
         >
           <button
             onClick={() => navigate("/chat")}
-            className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-foreground text-background font-medium text-lg transition-all hover:bg-foreground/90 active:scale-[0.98]"
+            className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-foreground text-background font-medium text-lg transition-all hover:bg-foreground/90 active:scale-[0.98] btn-glow pulse-glow"
           >
+            <Sparkles size={20} className="opacity-60" />
             <span>Enter Enma</span>
             <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
           </button>
@@ -84,10 +106,11 @@ export const Landing = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 + index * 0.1 }}
+            className="hover-glow"
           >
             <GlassCard
               variant="subtle"
-              className="p-4 h-full text-center"
+              className="p-4 h-full text-center glass-glow"
             >
               <h3 className="font-medium text-foreground text-sm mb-1">{feature.title}</h3>
               <p className="text-xs text-muted-foreground">{feature.description}</p>
@@ -101,9 +124,10 @@ export const Landing = () => {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1 }}
-        className="absolute bottom-6 text-xs text-muted-foreground/30"
+        className="absolute bottom-6 text-xs text-muted-foreground/30 flex items-center gap-2"
       >
-        v1.0.0
+        <span className="w-1.5 h-1.5 rounded-full bg-foreground/30 animate-pulse" />
+        v1.0.0 • Free & Open
       </motion.div>
     </div>
   );
