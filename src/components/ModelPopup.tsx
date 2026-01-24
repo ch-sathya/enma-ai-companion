@@ -63,97 +63,113 @@ export const ModelPopup = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 z-50"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
             onClick={onClose}
           />
 
           {/* Popup */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="fixed inset-4 top-[10%] bottom-auto z-50 mx-auto max-w-sm"
+            className="fixed left-4 right-4 top-[10%] z-50 mx-auto max-w-sm"
           >
-            <GlassCard variant="strong" chromium className="p-4 border border-white/10 rounded-2xl">
-              {/* Header */}
-              <div className="flex items-center justify-between mb-4 flex-shrink-0">
-                <div className="flex items-center gap-2">
-                  <Cpu size={18} className="text-foreground" />
+            <GlassCard 
+              variant="clean" 
+              className="flex flex-col max-h-[calc(100dvh-6rem)] overflow-hidden border border-white/10 rounded-2xl shadow-2xl"
+            >
+              {/* Header - Fixed */}
+              <div className="flex items-center justify-between p-4 pb-3 border-b border-white/5 flex-shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-white/5">
+                    <Cpu size={16} className="text-foreground" />
+                  </div>
                   <h3 className="font-medium text-foreground">Select Model</h3>
                 </div>
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-white/10 transition-all duration-200 hover:scale-105"
                 >
-                  <X size={16} />
+                  <X size={16} className="text-muted-foreground" />
                 </button>
               </div>
 
-              {/* Model list - scrollable */}
-              <div className="overflow-y-auto max-h-[40vh] pr-1">
-                <div className="space-y-2 pb-2">
+              {/* Scrollable Content Area */}
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                {/* Model list */}
+                <div className="p-3 space-y-1.5">
                   {MODELS.map((model) => (
                     <button
                       key={model.id}
                       onClick={() => handleSelect(model.id)}
-                      className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 hover:scale-[1.01] ${
+                      className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group ${
                         selectedModel === model.id
-                          ? "bg-white/10 border border-white/20"
-                          : "hover:bg-white/5 border border-transparent"
+                          ? "bg-white/10 border border-white/20 shadow-lg"
+                          : "hover:bg-white/5 border border-transparent hover:border-white/10"
                       }`}
                     >
                       <div className="text-left">
-                        <p className="text-sm font-medium text-foreground">{model.name}</p>
-                        <p className="text-xs text-muted-foreground">{model.description}</p>
+                        <p className="text-sm font-medium text-foreground group-hover:text-white transition-colors">
+                          {model.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{model.description}</p>
                       </div>
                       {selectedModel === model.id && (
-                        <Check size={16} className="text-foreground flex-shrink-0" />
+                        <div className="p-1 rounded-full bg-white/10">
+                          <Check size={14} className="text-foreground" />
+                        </div>
                       )}
                     </button>
                   ))}
                 </div>
-              </div>
 
-              {/* Fine-tune Settings Toggle */}
-              <button
-                onClick={() => setShowSettings(!showSettings)}
-                className="w-full flex items-center justify-between p-3 mt-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors border-t border-white/5"
-              >
-                <div className="flex items-center gap-2">
-                  <Settings2 size={14} className="text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">Fine-tune Settings</span>
-                </div>
-                {showSettings ? (
-                  <ChevronUp size={14} className="text-muted-foreground" />
-                ) : (
-                  <ChevronDown size={14} className="text-muted-foreground" />
-                )}
-              </button>
+                {/* Divider */}
+                <div className="mx-4 border-t border-white/5" />
 
-              {/* Settings Panel */}
-              <AnimatePresence>
-                {showSettings && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: "auto", opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                    className="overflow-hidden"
+                {/* Fine-tune Settings Toggle */}
+                <div className="p-3">
+                  <button
+                    onClick={() => setShowSettings(!showSettings)}
+                    className="w-full flex items-center justify-between p-3 rounded-xl bg-white/5 hover:bg-white/8 transition-all duration-200 border border-white/5 hover:border-white/10"
                   >
-                    <div className="pt-2 px-1">
-                      <ModelSettings
-                        temperature={temperature}
-                        topP={topP}
-                        maxTokens={maxTokens}
-                        onTemperatureChange={onTemperatureChange}
-                        onTopPChange={onTopPChange}
-                        onMaxTokensChange={onMaxTokensChange}
-                      />
+                    <div className="flex items-center gap-2.5">
+                      <Settings2 size={14} className="text-muted-foreground" />
+                      <span className="text-sm text-muted-foreground">Fine-tune Settings</span>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                    <motion.div
+                      animate={{ rotate: showSettings ? 180 : 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <ChevronDown size={14} className="text-muted-foreground" />
+                    </motion.div>
+                  </button>
+
+                  {/* Settings Panel */}
+                  <AnimatePresence>
+                    {showSettings && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                      >
+                        <div className="pt-3 px-1">
+                          <ModelSettings
+                            temperature={temperature}
+                            topP={topP}
+                            maxTokens={maxTokens}
+                            onTemperatureChange={onTemperatureChange}
+                            onTopPChange={onTopPChange}
+                            onMaxTokensChange={onMaxTokensChange}
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </div>
             </GlassCard>
           </motion.div>
         </>

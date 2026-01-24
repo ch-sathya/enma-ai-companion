@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, User, Volume2, Mic, Check, Play } from "lucide-react";
+import { X, User, Volume2, Mic, Check, Play, Square } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -29,15 +29,29 @@ export const SettingsPopup = ({
   const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [isPreviewPlaying, setIsPreviewPlaying] = useState<string | null>(null);
 
-  // Load browser voices
+  // Load browser voices with quality sorting
   useEffect(() => {
     if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
 
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
-      // Filter to English voices and limit to most useful ones
-      const englishVoices = voices.filter(v => v.lang.startsWith('en'));
-      setBrowserVoices(englishVoices.length > 0 ? englishVoices.slice(0, 8) : voices.slice(0, 8));
+      // Filter to English voices and prioritize high-quality ones
+      const englishVoices = voices
+        .filter(v => v.lang.startsWith('en'))
+        .sort((a, b) => {
+          // Prioritize Neural/Natural/Premium voices
+          const qualityKeywords = ['neural', 'natural', 'premium', 'enhanced', 'wavenet'];
+          const aQuality = qualityKeywords.some(k => a.name.toLowerCase().includes(k)) ? 2 : 0;
+          const bQuality = qualityKeywords.some(k => b.name.toLowerCase().includes(k)) ? 2 : 0;
+          if (bQuality !== aQuality) return bQuality - aQuality;
+          
+          // Then prioritize Google/Microsoft voices
+          const aProvider = a.name.includes('Google') ? 1 : a.name.includes('Microsoft') ? 0.5 : 0;
+          const bProvider = b.name.includes('Google') ? 1 : b.name.includes('Microsoft') ? 0.5 : 0;
+          return bProvider - aProvider;
+        })
+        .slice(0, 12); // Limit to top 12 voices
+      setBrowserVoices(englishVoices.length > 0 ? englishVoices : voices.slice(0, 12));
     };
 
     loadVoices();
@@ -74,12 +88,13 @@ export const SettingsPopup = ({
     window.speechSynthesis.cancel();
     setIsPreviewPlaying(voiceName);
 
-    const utterance = new SpeechSynthesisUtterance("Hello! I'm Enma, your AI assistant.");
+    const utterance = new SpeechSynthesisUtterance("Hello! I'm Enma, your AI assistant. How can I help you today?");
     const voice = browserVoices.find(v => v.name === voiceName);
     if (voice) {
       utterance.voice = voice;
     }
-    utterance.rate = 1.0;
+    // Slightly slower for better quality preview
+    utterance.rate = 0.9;
     utterance.pitch = 1.0;
 
     utterance.onend = () => setIsPreviewPlaying(null);
@@ -88,10 +103,19 @@ export const SettingsPopup = ({
     window.speechSynthesis.speak(utterance);
   };
 
+  const stopPreview = () => {
+    window.speechSynthesis?.cancel();
+    setIsPreviewPlaying(null);
+  };
+
   const getVoiceDescription = (voice: SpeechSynthesisVoice): string => {
-    if (voice.name.toLowerCase().includes("female")) return "Female voice";
-    if (voice.name.toLowerCase().includes("male")) return "Male voice";
-    if (voice.localService) return "Offline capable";
+    const name = voice.name.toLowerCase();
+    if (name.includes('neural') || name.includes('natural')) return "High Quality • Natural";
+    if (name.includes('premium') || name.includes('enhanced')) return "Premium Quality";
+    if (name.includes('wavenet')) return "WaveNet • Realistic";
+    if (voice.name.includes('Google')) return "Google Voice";
+    if (voice.name.includes('Microsoft')) return "Microsoft Voice";
+    if (voice.localService) return "Offline Available";
     return voice.lang;
   };
 
@@ -104,65 +128,67 @@ export const SettingsPopup = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50"
+            className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50"
             onClick={onClose}
           />
 
           {/* Popup */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+            exit={{ opacity: 0, scale: 0.95, y: 10 }}
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="fixed left-4 right-4 top-[8%] z-50 mx-auto max-w-md"
           >
             <GlassCard
-              variant="strong"
-              className="p-0 flex flex-col w-full max-w-md max-h-[calc(100dvh-2rem)] overflow-hidden"
+              variant="clean"
+              className="flex flex-col max-h-[calc(100dvh-5rem)] overflow-hidden border border-white/10 rounded-2xl shadow-2xl"
             >
-              {/* Header */}
-              <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-white/10">
-                <h2 className="text-lg font-semibold text-foreground">Settings</h2>
+              {/* Header - Fixed */}
+              <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-white/5">
+                <div className="flex items-center gap-2.5">
+                  <div className="p-1.5 rounded-lg bg-white/5">
+                    <User size={16} className="text-foreground" />
+                  </div>
+                  <h2 className="font-medium text-foreground">Settings</h2>
+                </div>
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
+                  className="p-1.5 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all duration-200 hover:scale-105"
                 >
-                  <X size={20} />
+                  <X size={18} />
                 </button>
               </div>
 
               {/* Content - scrollable */}
-              <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-6">
+              <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-5">
                 {/* Display Name */}
                 <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-foreground">
-                    <User size={16} />
-                    Your Name
-                  </Label>
+                  <Label className="text-sm text-muted-foreground">Your Name</Label>
                   <Input
                     value={displayName}
                     onChange={(e) => setDisplayName(e.target.value)}
                     placeholder="What should Enma call you?"
-                    className="bg-white/5 border-white/10 focus:border-primary/50"
+                    className="bg-white/5 border-white/10 focus:border-white/20 rounded-xl"
                   />
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-xs text-muted-foreground/70">
                     Enma will address you by this name in conversations
                   </p>
                 </div>
 
                 {/* Voice Settings */}
-                <div className="space-y-4">
-                  <h3 className="text-sm font-medium text-foreground flex items-center gap-2">
-                    <Volume2 size={16} />
-                    Voice Settings
-                  </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Volume2 size={14} />
+                    <span>Voice Settings</span>
+                  </div>
 
                   {/* Voice Enabled */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
                     <div>
-                      <Label className="text-foreground">Voice Responses</Label>
-                      <p className="text-xs text-muted-foreground">
-                        Enma speaks responses aloud (free, uses browser)
+                      <p className="text-sm text-foreground">Voice Responses</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Enma speaks responses aloud (free)
                       </p>
                     </div>
                     <Switch
@@ -172,13 +198,13 @@ export const SettingsPopup = ({
                   </div>
 
                   {/* Wake Word */}
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
                     <div>
-                      <Label className="text-foreground flex items-center gap-2">
-                        <Mic size={14} />
+                      <p className="text-sm text-foreground flex items-center gap-1.5">
+                        <Mic size={12} />
                         Wake Word Detection
-                      </Label>
-                      <p className="text-xs text-muted-foreground">
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         Say "Enma" to start talking
                       </p>
                     </div>
@@ -196,42 +222,46 @@ export const SettingsPopup = ({
                       exit={{ opacity: 0, height: 0 }}
                       className="space-y-2"
                     >
-                      <Label className="text-foreground">Enma's Voice</Label>
-                      <p className="text-xs text-muted-foreground mb-2">
-                        Click the play button to preview each voice
+                      <Label className="text-sm text-muted-foreground">Enma's Voice</Label>
+                      <p className="text-xs text-muted-foreground/70 mb-2">
+                        Click play to preview each voice
                       </p>
-                      <div className="grid grid-cols-1 gap-2 max-h-[200px] overflow-y-auto pr-1">
+                      <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
                         {browserVoices.map((voice) => (
                           <button
                             key={voice.name}
                             onClick={() => setPreferredVoice(voice.name)}
-                            className={`p-3 rounded-lg border text-left transition-all flex items-center justify-between gap-2 ${
+                            className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-200 group ${
                               preferredVoice === voice.name
-                                ? "border-primary bg-primary/10"
-                                : "border-white/10 bg-white/5 hover:bg-white/10"
+                                ? "bg-white/10 border border-white/20 shadow-lg"
+                                : "bg-white/5 border border-transparent hover:border-white/10"
                             }`}
                           >
-                            <div className="flex-1 min-w-0">
-                              <div className="font-medium text-sm text-foreground truncate">
+                            <div className="flex-1 min-w-0 text-left">
+                              <div className="text-sm text-foreground truncate group-hover:text-white transition-colors">
                                 {voice.name.replace(/Microsoft |Google |Apple /, '')}
                               </div>
-                              <div className="text-xs text-muted-foreground">
+                              <div className="text-xs text-muted-foreground mt-0.5">
                                 {getVoiceDescription(voice)}
                               </div>
                             </div>
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                previewVoice(voice.name);
+                                isPreviewPlaying === voice.name ? stopPreview() : previewVoice(voice.name);
                               }}
-                              className={`p-2 rounded-lg transition-all ${
+                              className={`p-2 rounded-lg transition-all ml-2 flex-shrink-0 ${
                                 isPreviewPlaying === voice.name
-                                  ? "bg-primary text-primary-foreground animate-pulse"
-                                  : "bg-white/10 hover:bg-white/20 text-foreground"
+                                  ? "bg-white/20 text-foreground"
+                                  : "bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground"
                               }`}
-                              title="Preview voice"
+                              title={isPreviewPlaying === voice.name ? "Stop preview" : "Preview voice"}
                             >
-                              <Play size={14} />
+                              {isPreviewPlaying === voice.name ? (
+                                <Square size={12} />
+                              ) : (
+                                <Play size={12} />
+                              )}
                             </button>
                           </button>
                         ))}
@@ -248,15 +278,15 @@ export const SettingsPopup = ({
               </div>
 
               {/* Footer - fixed at bottom */}
-              <div className="flex-shrink-0 p-4 border-t border-white/10">
+              <div className="flex-shrink-0 p-4 border-t border-white/5">
                 <button
                   onClick={handleSave}
                   disabled={isSaving}
-                  className="w-full py-2.5 px-4 rounded-lg bg-primary text-primary-foreground font-medium transition-all hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 rounded-xl bg-white/10 hover:bg-white/15 transition-all duration-200 text-sm font-medium text-foreground border border-white/10 hover:border-white/20 disabled:opacity-50 flex items-center justify-center gap-2"
                 >
                   {saved ? (
                     <>
-                      <Check size={18} />
+                      <Check size={16} />
                       Saved!
                     </>
                   ) : isSaving ? (
