@@ -13,6 +13,7 @@ import { GlassCard } from "@/components/GlassCard";
 import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { getPersonaById, Persona } from "@/data/personas";
 import { Sparkles } from "lucide-react";
 import { MessageSkeleton } from "@/components/MessageSkeleton";
@@ -150,10 +151,24 @@ export const Chat = () => {
     }
   };
 
-  const handleNewConversation = async () => {
+  const handleNewConversation = useCallback(() => {
     setCurrentConversationId(null);
     clearMessages();
-  };
+  }, [setCurrentConversationId, clearMessages]);
+
+  // Keyboard shortcuts (after handlers are defined)
+  const closeAllPopups = useCallback(() => {
+    setModelPopupOpen(false);
+    setPersonaPopupOpen(false);
+    setAuthOpen(false);
+  }, []);
+
+  useKeyboardShortcuts({
+    onToggleSidebar: useCallback(() => setSidebarOpen(prev => !prev), []),
+    onNewChat: handleNewConversation,
+    onOpenModelPopup: useCallback(() => setModelPopupOpen(true), []),
+    onClosePopups: closeAllPopups,
+  });
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
