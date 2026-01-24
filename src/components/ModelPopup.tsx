@@ -47,11 +47,12 @@ export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: Mo
             initial={{ opacity: 0, scale: 0.95, y: 10 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-sm mx-4"
+            transition={{ duration: 0.2, ease: "easeOut" }}
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-sm mx-4 max-w-[calc(100%-2rem)]"
           >
-            <GlassCard variant="strong" chromium className="p-4">
+            <GlassCard variant="strong" chromium className="p-4 max-h-[70vh] flex flex-col">
               {/* Header */}
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center justify-between mb-4 flex-shrink-0">
                 <div className="flex items-center gap-2">
                   <Cpu size={18} className="text-foreground" />
                   <h3 className="font-medium text-foreground">Select Model</h3>
@@ -64,13 +65,13 @@ export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: Mo
                 </button>
               </div>
 
-              {/* Model list */}
-              <div className="space-y-2">
+              {/* Model list - scrollable */}
+              <div className="space-y-2 overflow-y-auto flex-1 pr-1 scrollbar-thin scrollbar-thumb-white/10 scrollbar-track-transparent">
                 {MODELS.map((model) => (
                   <button
                     key={model.id}
                     onClick={() => handleSelect(model.id)}
-                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-all ${
+                    className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 hover:scale-[1.01] ${
                       selectedModel === model.id
                         ? "bg-white/10 border border-white/20"
                         : "hover:bg-white/5 border border-transparent"
@@ -81,7 +82,7 @@ export const ModelPopup = ({ isOpen, onClose, selectedModel, onSelectModel }: Mo
                       <p className="text-xs text-muted-foreground">{model.description}</p>
                     </div>
                     {selectedModel === model.id && (
-                      <Check size={16} className="text-foreground" />
+                      <Check size={16} className="text-foreground flex-shrink-0" />
                     )}
                   </button>
                 ))}

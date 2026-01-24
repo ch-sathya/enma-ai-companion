@@ -1,65 +1,48 @@
-import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
 interface EnmaLogoProps {
   size?: "sm" | "md" | "lg" | "xl";
-  animated?: boolean;
   showIcon?: boolean;
 }
 
-export const EnmaLogo = ({ size = "md", animated = true, showIcon = true }: EnmaLogoProps) => {
+const KatanaIcon = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 48 48" fill="none" className={className}>
+    {/* Katana blade - elegant diagonal */}
+    <path d="M6 42 L38 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+    {/* Blade tip */}
+    <path d="M38 10 L42 6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+    {/* Guard (tsuba) */}
+    <ellipse cx="36" cy="12" rx="3" ry="1" fill="currentColor" transform="rotate(-45 36 12)"/>
+    {/* Handle (tsuka) */}
+    <path d="M6 42 L3 45" stroke="currentColor" strokeWidth="3" strokeLinecap="round"/>
+  </svg>
+);
+
+export const EnmaLogo = ({ size = "md", showIcon = true }: EnmaLogoProps) => {
   const sizeClasses = {
-    sm: "text-xl",
-    md: "text-3xl",
-    lg: "text-5xl",
-    xl: "text-7xl",
+    sm: "text-lg",
+    md: "text-2xl",
+    lg: "text-4xl",
+    xl: "text-6xl",
   };
 
   const iconSizes = {
-    sm: 20,
-    md: 32,
-    lg: 48,
-    xl: 64,
+    sm: "w-5 h-5",
+    md: "w-7 h-7",
+    lg: "w-10 h-10",
+    xl: "w-14 h-14",
   };
 
-  const logoContent = (
-    <div className="flex items-center gap-3">
+  return (
+    <Link to="/" className="flex items-center gap-2 group">
       {showIcon && (
-        <svg
-          width={iconSizes[size]}
-          height={iconSizes[size]}
-          viewBox="0 0 48 48"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="flex-shrink-0"
-        >
-          {/* Abstract geometric "E" mark */}
-          <rect x="8" y="8" width="32" height="32" rx="4" stroke="white" strokeWidth="2" fill="none" />
-          <path
-            d="M16 16h16M16 24h12M16 32h16"
-            stroke="white"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-          />
-          {/* Corner accent */}
-          <circle cx="38" cy="10" r="3" fill="white" />
-        </svg>
+        <div className="text-foreground transition-transform duration-300 group-hover:rotate-12">
+          <KatanaIcon className={iconSizes[size]} />
+        </div>
       )}
-      <span className={`font-semibold tracking-tight ${sizeClasses[size]} text-foreground`}>
+      <span className={`font-bold tracking-wider text-foreground ${sizeClasses[size]}`}>
         ENMA
       </span>
-    </div>
-  );
-
-  if (!animated) return logoContent;
-
-  return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.6, ease: "easeOut" }}
-      className="relative"
-    >
-      {logoContent}
-    </motion.div>
+    </Link>
   );
 };

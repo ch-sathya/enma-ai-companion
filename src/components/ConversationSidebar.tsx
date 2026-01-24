@@ -68,8 +68,8 @@ export const ConversationSidebar = ({
       >
         <GlassCard variant="strong" className="h-full rounded-none rounded-r-2xl flex flex-col">
           {/* Logo */}
-          <div className="p-6 border-b border-white/5 safe-top">
-            <EnmaLogo size="sm" showIcon={false} />
+          <div className="px-5 py-4 border-b border-white/5 safe-top">
+            <EnmaLogo size="sm" showIcon={true} />
           </div>
 
           {/* New chat button */}
