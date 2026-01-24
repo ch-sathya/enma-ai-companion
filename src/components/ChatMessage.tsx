@@ -90,13 +90,11 @@ const ChatMessageComponent = ({
           <User size={16} />
         </div>
       ) : (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-black border border-white/20">
-          <img
-            src="/enma-logo-white.svg"
-            alt="Enma"
-            className="w-5 h-5 object-contain"
-          />
-        </div>
+        <img
+          src="/enma-avatar.webp"
+          alt="Enma"
+          className="flex-shrink-0 w-8 h-8 rounded-full object-contain bg-white p-1"
+        />
       )}
 
       {/* Message content */}
