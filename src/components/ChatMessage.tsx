@@ -1,0 +1,182 @@
+import { motion } from "framer-motion";
+import ReactMarkdown from "react-markdown";
+import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
+import { Copy, Check, User, Sparkles, RefreshCw, Pencil } from "lucide-react";
+import { useState } from "react";
+import { cn } from "@/lib/utils";
+
+interface ChatMessageProps {
+  role: "user" | "assistant";
+  content: string;
+  isStreaming?: boolean;
+  onRegenerate?: () => void;
+  onEdit?: () => void;
+}
+
+export const ChatMessage = ({ role, content, isStreaming, onRegenerate, onEdit }: ChatMessageProps) => {
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  const copyToClipboard = async (code: string) => {
+    await navigator.clipboard.writeText(code);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  const isUser = role === "user";
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className={cn("flex gap-3 group", isUser ? "flex-row-reverse" : "flex-row")}
+    >
+      {/* Avatar */}
+      <div
+        className={cn(
+          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+          isUser ? "bg-primary/20 text-primary" : "bg-white/5 text-primary"
+        )}
+      >
+        {isUser ? <User size={16} /> : <Sparkles size={16} />}
+      </div>
+
+      {/* Message content */}
+      <div className={cn("flex-1 max-w-[80%]", isUser ? "flex justify-end" : "")}>
+        <div
+          className={cn(
+            "rounded-2xl px-4 py-3",
+            isUser
+              ? "glass-strong rounded-br-md text-foreground"
+              : "glass-subtle rounded-bl-md"
+          )}
+        >
+          {isStreaming && !content ? (
+            <div className="flex gap-1.5 py-2">
+              <div className="typing-dot" />
+              <div className="typing-dot" />
+              <div className="typing-dot" />
+            </div>
+          ) : (
+            <div className="prose prose-invert prose-sm max-w-none">
+              <ReactMarkdown
+                components={{
+                  code({ node, className, children, ...props }) {
+                    const match = /language-(\w+)/.exec(className || "");
+                    const codeString = String(children).replace(/\n$/, "");
+                    
+                    if (match) {
+                      return (
+                        <div className="relative my-4 code-block">
+                          <div className="flex items-center justify-between px-4 py-2 bg-white/5 border-b border-white/10">
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {match[1]}
+                            </span>
+                            <button
+                              onClick={() => copyToClipboard(codeString)}
+                              className="text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                              {copiedCode === codeString ? (
+                                <Check size={14} className="text-green-400" />
+                              ) : (
+                                <Copy size={14} />
+                              )}
+                            </button>
+                          </div>
+                          <SyntaxHighlighter
+                            style={oneDark}
+                            language={match[1]}
+                            PreTag="div"
+                            customStyle={{
+                              margin: 0,
+                              background: "transparent",
+                              padding: "1rem",
+                            }}
+                          >
+                            {codeString}
+                          </SyntaxHighlighter>
+                        </div>
+                      );
+                    }
+
+                    return (
+                      <code
+                        className="bg-white/10 px-1.5 py-0.5 rounded text-sm font-mono text-primary"
+                        {...props}
+                      >
+                        {children}
+                      </code>
+                    );
+                  },
+                  p({ children }) {
+                    return <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>;
+                  },
+                  ul({ children }) {
+                    return <ul className="list-disc list-inside mb-3 space-y-1">{children}</ul>;
+                  },
+                  ol({ children }) {
+                    return <ol className="list-decimal list-inside mb-3 space-y-1">{children}</ol>;
+                  },
+                  a({ href, children }) {
+                    return (
+                      <a
+                        href={href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline"
+                      >
+                        {children}
+                      </a>
+                    );
+                  },
+                }}
+              >
+                {content}
+              </ReactMarkdown>
+            </div>
+          )}
+        </div>
+
+        {/* Actions */}
+        {!isStreaming && content && (
+          <div
+            className={cn(
+              "flex gap-2 mt-2 opacity-0 group-hover:opacity-100 transition-opacity",
+              isUser ? "justify-end" : "justify-start"
+            )}
+          >
+            {!isUser && onRegenerate && (
+              <button
+                onClick={onRegenerate}
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all"
+                title="Regenerate"
+              >
+                <RefreshCw size={14} />
+              </button>
+            )}
+            {isUser && onEdit && (
+              <button
+                onClick={onEdit}
+                className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all"
+                title="Edit"
+              >
+                <Pencil size={14} />
+              </button>
+            )}
+            <button
+              onClick={() => copyToClipboard(content)}
+              className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all"
+              title="Copy"
+            >
+              {copiedCode === content ? (
+                <Check size={14} className="text-green-400" />
+              ) : (
+                <Copy size={14} />
+              )}
+            </button>
+          </div>
+        )}
+      </div>
+    </motion.div>
+  );
+};
