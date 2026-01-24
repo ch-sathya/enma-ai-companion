@@ -70,6 +70,8 @@ export const Chat = () => {
   const [authOpen, setAuthOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastSpokenRef = useRef<string>("");
+  const usedVoiceInputRef = useRef(false);
+  const wakeWordInitializedRef = useRef(false);
 
   // User preferences
   const { preferences, savePreferences } = useUserPreferences(user);
@@ -147,10 +149,11 @@ export const Chat = () => {
     [handleSendMessageInternal]
   );
 
-  // Voice handling
+  // Voice handling - mark that voice was used
   const handleVoiceTranscript = useCallback(
     (text: string) => {
       if (text.trim()) {
+        usedVoiceInputRef.current = true;
         void handleSendMessageInternal(text);
       }
     },
@@ -178,19 +181,24 @@ export const Chat = () => {
     hasPermission,
     isListening,
   } = voice;
+  
+  // Store functions in refs to use in effect without recreating
+  const startWakeWordRef = useRef(startWakeWordDetection);
+  const stopWakeWordRef = useRef(stopWakeWordDetection);
+  startWakeWordRef.current = startWakeWordDetection;
+  stopWakeWordRef.current = stopWakeWordDetection;
+  
   useEffect(() => {
-    if (preferences.wake_word_enabled && hasPermission === true) {
-      void startWakeWordDetection();
-    } else {
-      stopWakeWordDetection();
+    // Only initialize once per wake word enable, using ref to track
+    if (preferences.wake_word_enabled && hasPermission === true && !wakeWordInitializedRef.current) {
+      wakeWordInitializedRef.current = true;
+      void startWakeWordRef.current();
+    } else if (!preferences.wake_word_enabled && wakeWordInitializedRef.current) {
+      wakeWordInitializedRef.current = false;
+      stopWakeWordRef.current();
     }
-    return () => stopWakeWordDetection();
-  }, [
-    preferences.wake_word_enabled,
-    hasPermission,
-    startWakeWordDetection,
-    stopWakeWordDetection,
-  ]);
+    // No cleanup - handled by the ref tracking
+  }, [preferences.wake_word_enabled, hasPermission]);
 
   const handleVoiceToggle = useCallback(() => {
     // If wake word is enabled, mic button controls wake-word listening mode.
@@ -210,9 +218,10 @@ export const Chat = () => {
     toggleListening,
   ]);
 
-  // Speak assistant responses
+  // Speak assistant responses ONLY if user used voice input
   useEffect(() => {
     if (!preferences.voice_enabled || messages.length === 0 || isLoading) return;
+    if (!usedVoiceInputRef.current) return; // Only speak if voice was used
 
     const lastMessage = messages[messages.length - 1];
     if (
@@ -222,6 +231,7 @@ export const Chat = () => {
     ) {
       lastSpokenRef.current = lastMessage.content;
       voice.speak(lastMessage.content);
+      usedVoiceInputRef.current = false; // Reset after speaking
     }
   }, [messages, isLoading, preferences.voice_enabled, voice]);
 
@@ -371,10 +381,27 @@ export const Chat = () => {
               >
                 <EnmaLogo size="lg" centered asLink={false} />
                 <p className="text-lg text-foreground mt-4">{greeting}</p>
-                <p className="text-muted-foreground mt-2 mb-8">
+                <p className="text-muted-foreground mt-2 mb-6">
                   How can I help you today?
                 </p>
-
+                
+                {/* Minimal suggestions */}
+                <div className="flex flex-wrap justify-center gap-2">
+                  {[
+                    "Write a poem",
+                    "Explain something",
+                    "Brainstorm ideas",
+                  ].map((suggestion) => (
+                    <button
+                      key={suggestion}
+                      onClick={() => handleSendMessage(suggestion)}
+                      className="px-4 py-2 text-sm text-muted-foreground bg-white/5 rounded-full 
+                                 hover:bg-white/10 hover:text-foreground transition-all border border-white/10"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
               </motion.div>
             </div>
           ) : (

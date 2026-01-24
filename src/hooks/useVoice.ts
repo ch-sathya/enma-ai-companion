@@ -78,7 +78,16 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
   const retryCountRef = useRef(0);
   const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const shouldBeListeningRef = useRef(false);
+  const isRecognitionActiveRef = useRef(false);
+  const isWakeWordModeRef = useRef(false);
+  const wakeWordInitializedRef = useRef(false);
   const MAX_RETRIES = 3;
+
+  // Store callbacks in refs to avoid dependency issues
+  const onTranscriptRef = useRef(onTranscript);
+  const onWakeWordRef = useRef(onWakeWord);
+  onTranscriptRef.current = onTranscript;
+  onWakeWordRef.current = onWakeWord;
 
   // Check for Speech Recognition support
   const SpeechRecognitionAPI =
@@ -149,20 +158,21 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
       const currentTranscript = finalTranscript || interimTranscript;
       setTranscript(currentTranscript);
 
-      // Check for wake word
-      if (isWakeWordMode) {
+      // Check for wake word using ref to avoid stale closure
+      if (isWakeWordModeRef.current) {
         const lowerTranscript = currentTranscript.toLowerCase();
         if (
           lowerTranscript.includes("enma") ||
           lowerTranscript.includes("hey enma") ||
           lowerTranscript.includes("hi enma")
         ) {
-          onWakeWord?.();
+          onWakeWordRef.current?.();
           setIsWakeWordMode(false);
+          isWakeWordModeRef.current = false;
           setTranscript("");
         }
-      } else if (finalTranscript && onTranscript) {
-        onTranscript(finalTranscript.trim());
+      } else if (finalTranscript) {
+        onTranscriptRef.current?.(finalTranscript.trim());
         setTranscript("");
       }
     };
@@ -174,6 +184,7 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
         setHasPermission(false);
         setIsListening(false);
         shouldBeListeningRef.current = false;
+        isRecognitionActiveRef.current = false;
         toast.error("Microphone access denied. Please allow microphone access.");
         return;
       }
@@ -218,13 +229,17 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
 
       setIsListening(false);
       shouldBeListeningRef.current = false;
+      isRecognitionActiveRef.current = false;
     };
 
     recognition.onend = () => {
-      // Restart if in wake word mode or still supposed to be listening
+      isRecognitionActiveRef.current = false;
+      
+      // Restart if still supposed to be listening
       if (shouldBeListeningRef.current) {
         try {
           recognition.start();
+          isRecognitionActiveRef.current = true;
           setIsListening(true);
           return;
         } catch {
@@ -236,12 +251,12 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
     };
 
     recognitionRef.current = recognition;
-  }, [SpeechRecognitionAPI, isWakeWordMode, wakeWordEnabled, onTranscript, onWakeWord]);
+  }, [SpeechRecognitionAPI]);
 
   // Start listening
   const startListening = useCallback(async () => {
-    // Guard: don't start if already listening
-    if (isListening || shouldBeListeningRef.current) {
+    // Guard: don't start if already active using ref (not state)
+    if (isRecognitionActiveRef.current || shouldBeListeningRef.current) {
       console.log('Already listening, skipping start');
       return;
     }
@@ -262,25 +277,29 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
     if (recognitionRef.current) {
       try {
         recognitionRef.current.start();
+        isRecognitionActiveRef.current = true;
         setIsListening(true);
         setTranscript("");
       } catch (error) {
         // Handle "already started" error gracefully
         if (error instanceof DOMException && error.name === 'InvalidStateError') {
           console.log('Recognition already started, ignoring');
+          isRecognitionActiveRef.current = true;
           setIsListening(true);
         } else {
           console.error("Failed to start recognition:", error);
           toast.error("Failed to start voice recognition.");
           shouldBeListeningRef.current = false;
+          isRecognitionActiveRef.current = false;
         }
       }
     }
-  }, [isSupported, isListening, hasPermission, requestPermission, initRecognition]);
+  }, [isSupported, hasPermission, requestPermission, initRecognition]);
 
   // Stop listening
   const stopListening = useCallback(() => {
     shouldBeListeningRef.current = false;
+    isRecognitionActiveRef.current = false;
     
     if (retryTimeoutRef.current) {
       clearTimeout(retryTimeoutRef.current);
@@ -299,32 +318,35 @@ export const useVoice = (options: UseVoiceOptions = {}) => {
     setTranscript('');
   }, []);
 
-  // Toggle listening
+  // Toggle listening - use ref to check state
   const toggleListening = useCallback(() => {
-    if (isListening) {
+    if (isRecognitionActiveRef.current) {
       stopListening();
     } else {
-      startListening();
+      void startListening();
     }
-  }, [isListening, startListening, stopListening]);
+  }, [startListening, stopListening]);
 
   // Start wake word detection
   const startWakeWordDetection = useCallback(async () => {
-    // Guard: don't start if already listening
-    if (isListening || shouldBeListeningRef.current) {
+    // Guard: don't start if already active
+    if (isRecognitionActiveRef.current || shouldBeListeningRef.current) {
       console.log('Already listening for wake word, skipping start');
       return;
     }
     
-    if (!wakeWordEnabled || !isSupported) return;
+    if (!isSupported) return;
 
     setIsWakeWordMode(true);
+    isWakeWordModeRef.current = true;
     await startListening();
-  }, [wakeWordEnabled, isSupported, isListening, startListening]);
+  }, [isSupported, startListening]);
 
   // Stop wake word detection
   const stopWakeWordDetection = useCallback(() => {
     setIsWakeWordMode(false);
+    isWakeWordModeRef.current = false;
+    wakeWordInitializedRef.current = false;
     stopListening();
   }, [stopListening]);
 
