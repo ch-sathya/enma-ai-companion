@@ -32,14 +32,17 @@ export const ChatMessage = ({ role, content, isStreaming, onRegenerate, onEdit }
       className={cn("flex gap-3 group", isUser ? "flex-row-reverse" : "flex-row")}
     >
       {/* Avatar */}
-      <div
-        className={cn(
-          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-          isUser ? "bg-primary/20 text-primary" : "bg-white/5 text-primary"
-        )}
-      >
-        {isUser ? <User size={16} /> : <Sparkles size={16} />}
-      </div>
+      {isUser ? (
+        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center bg-primary/20 text-primary">
+          <User size={16} />
+        </div>
+      ) : (
+        <img
+          src="/enma-avatar.webp"
+          alt="Enma"
+          className="flex-shrink-0 w-8 h-8 rounded-full object-contain bg-white/5"
+        />
+      )}
 
       {/* Message content */}
       <div className={cn("flex-1 max-w-[80%]", isUser ? "flex justify-end" : "")}>

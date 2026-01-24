@@ -72,9 +72,15 @@ export const ConversationSidebar = ({
         className="fixed left-0 top-0 h-full w-[280px] z-40 flex flex-col"
       >
         <GlassCard variant="strong" className="h-full rounded-none rounded-r-2xl flex flex-col">
-          {/* Logo */}
-          <div className="h-14 px-4 flex items-center border-b border-white/5 mt-safe">
-            <EnmaLogo size="sm" showIcon={true} />
+          {/* Close button for mobile */}
+          <div className="h-14 px-4 flex items-center justify-between border-b border-white/5 mt-safe">
+            <span className="font-bold tracking-wider text-foreground text-lg">ENMA</span>
+            <button
+              onClick={onToggle}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors md:hidden"
+            >
+              <X size={20} />
+            </button>
           </div>
 
           {/* New chat button */}
