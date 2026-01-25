@@ -16,7 +16,7 @@ import { useChat } from "@/hooks/useChat";
 import { useConversations } from "@/hooks/useConversations";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { useVoice } from "@/hooks/useVoice";
+import { useElevenLabsVoice } from "@/hooks/useElevenLabsVoice";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { getPersonaById, Persona } from "@/data/personas";
 import { Settings } from "lucide-react";
@@ -161,37 +161,21 @@ export const Chat = () => {
     [handleSendMessageInternal]
   );
 
-  const voice = useVoice({
+  const voice = useElevenLabsVoice({
     onTranscript: handleVoiceTranscript,
-    onWakeWord: () => {
-      // When wake word detected, start main listening mode
-      voice.stopWakeWordDetection?.();
-      toast.success("Hey! I'm listening...");
-    },
-    wakeWordEnabled: preferences.wake_word_enabled,
     voiceEnabled: preferences.voice_enabled,
     preferredVoice: preferences.preferred_voice,
   });
 
-  // Start wake word detection when enabled
+  // Show connection status toast
   useEffect(() => {
-    if (preferences.wake_word_enabled && voice.isSupported && !voice.isListening) {
-      voice.startWakeWordDetection?.();
+    if (voice.isConnecting) {
+      // Voice is connecting...
     }
-    return () => {
-      if (voice.isWakeWordMode) {
-        voice.stopWakeWordDetection?.();
-      }
-    };
-  }, [preferences.wake_word_enabled, voice.isSupported]);
+  }, [voice.isConnecting]);
 
   // Destructure voice methods
-  const {
-    toggleListening,
-    hasPermission,
-    isListening,
-    isSupported,
-  } = voice;
+  const { toggleListening } = voice;
 
   const handleVoiceToggle = useCallback(() => {
     toggleListening();
