@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
+import enmaKatanaLogo from "@/assets/enma-katana-logo.png";
 
 interface EnmaLogoProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -68,7 +69,7 @@ export const EnmaLogo = ({
             style={{ pointerEvents: 'none' }}
           />
           <img
-            src="/enma-logo.svg"
+            src={enmaKatanaLogo}
             alt="Enma"
             className={cn(
               iconSizes[size],
