@@ -29,7 +29,29 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
   // ElevenLabs Scribe hook for realtime transcription
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
-    commitStrategy: CommitStrategy.VAD, // Voice Activity Detection - auto-commits on silence
+    // Voice Activity Detection - auto-commits on silence
+    // Tuned to commit more reliably across noisier mics.
+    commitStrategy: CommitStrategy.VAD,
+    vadSilenceThresholdSecs: 0.8,
+    vadThreshold: 0.35,
+    minSpeechDurationMs: 150,
+    minSilenceDurationMs: 250,
+    onError: (error) => {
+      console.error("ElevenLabs Scribe error:", error);
+      toast.error("Voice input error. Please try again.");
+    },
+    onAuthError: (data) => {
+      console.error("ElevenLabs Scribe auth error:", data?.error);
+      toast.error("Voice auth error. Please try again.");
+    },
+    onQuotaExceededError: (data) => {
+      console.error("ElevenLabs Scribe quota exceeded:", data?.error);
+      toast.error("Voice quota exceeded. Please try again later.");
+    },
+    onInsufficientAudioActivityError: (data) => {
+      console.warn("ElevenLabs Scribe insufficient audio activity:", data?.error);
+      toast.error("No audio detected. Check your microphone and try again.");
+    },
     onCommittedTranscript: (data) => {
       if (data.text?.trim()) {
         onTranscriptRef.current?.(data.text.trim());
@@ -118,7 +140,22 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
   // Stop listening
   const stopListening = useCallback(() => {
     if (scribe.isConnected) {
-      scribe.disconnect();
+      // Force-commit any in-progress transcript before disconnecting.
+      // This helps when VAD doesn't commit due to background noise.
+      try {
+        scribe.commit();
+      } catch {
+        // ignore
+      }
+
+      // Give commit a brief moment to flush, then disconnect.
+      setTimeout(() => {
+        try {
+          scribe.disconnect();
+        } catch {
+          // ignore
+        }
+      }, 120);
       console.log("ElevenLabs Scribe disconnected");
     }
   }, [scribe]);
