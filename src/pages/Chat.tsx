@@ -367,18 +367,6 @@ export const Chat = () => {
                   How can I help you today?
                 </p>
                 
-                {/* Wake word indicator */}
-                {preferences.wake_word_enabled && voice.isWakeWordMode && (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.9 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="mb-4 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-muted-foreground flex items-center gap-2"
-                  >
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                    Say "Enma" to start
-                  </motion.div>
-                )}
-                
                 {/* Minimal suggestions */}
                 <div className="flex flex-wrap justify-center gap-2 w-full">
                   {[
