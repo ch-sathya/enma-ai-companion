@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import enmaKatanaLogo from "@/assets/enma-katana-logo.png";
+import { useTransparentImage } from "@/hooks/useTransparentImage";
 
 interface EnmaLogoProps {
   size?: "sm" | "md" | "lg" | "xl";
@@ -22,6 +23,8 @@ export const EnmaLogo = ({
   glow = false,
   animate = true,
 }: EnmaLogoProps) => {
+  const logoSrc = useTransparentImage(enmaKatanaLogo);
+
   const sizeClasses = {
     sm: "text-lg",
     md: "text-xl",
@@ -69,7 +72,7 @@ export const EnmaLogo = ({
             style={{ pointerEvents: 'none' }}
           />
           <img
-            src={enmaKatanaLogo}
+            src={logoSrc}
             alt="Enma"
             className={cn(
               iconSizes[size],
