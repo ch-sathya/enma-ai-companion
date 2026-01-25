@@ -7,7 +7,6 @@ import { Copy, Check, User, RefreshCw, Pencil, FileText, File } from "lucide-rea
 import { useState } from "react";
 import { cn } from "@/lib/utils";
 import enmaKatanaLogo from "@/assets/enma-katana-logo.png";
-import { useTransparentImage } from "@/hooks/useTransparentImage";
 
 interface Attachment {
   url: string;
@@ -33,7 +32,6 @@ const ChatMessageComponent = ({
   onEdit 
 }: ChatMessageProps) => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
-  const assistantLogoSrc = useTransparentImage(enmaKatanaLogo);
 
   const copyToClipboard = async (code: string) => {
     await navigator.clipboard.writeText(code);
@@ -93,11 +91,11 @@ const ChatMessageComponent = ({
           <User size={16} />
         </div>
       ) : (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border border-border/40 bg-transparent overflow-hidden">
+        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center overflow-hidden bg-black/50">
           <img
-            src={assistantLogoSrc}
+            src={enmaKatanaLogo}
             alt="Enma"
-            className="w-full h-full object-cover scale-150"
+            className="w-full h-full object-cover scale-[2] rotate-[-15deg] mix-blend-lighten"
           />
         </div>
       )}
