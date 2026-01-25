@@ -4,7 +4,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Enma Design System - Pure Black & White Glassmorphism with Ambient Glow */
+/* Enma Design System - Pure Black & White Glassmorphism with Katana Accents */
 
 @layer base {
   :root {
@@ -40,6 +40,12 @@
     --ring: 0 0% 100%;
 
     --radius: 0.75rem;
+
+    /* Katana accent colors - subtle purple and gold */
+    --enma-purple: 270 45% 55%;
+    --enma-purple-glow: 270 50% 60%;
+    --enma-gold: 43 74% 49%;
+    --enma-gold-glow: 43 80% 55%;
 
     /* Glass properties */
     --glass-blur: 20px;
@@ -433,6 +439,86 @@
 
   .prompt-card:hover::before {
     opacity: 1;
+  }
+
+  /* Enhanced success state */
+  .success-glow {
+    box-shadow: 0 0 20px hsl(142 70% 45% / 0.3);
+  }
+
+  /* Katana accent glow */
+  .enma-glow {
+    position: relative;
+  }
+
+  .enma-glow::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: inherit;
+    background: linear-gradient(
+      135deg,
+      hsl(var(--enma-purple) / 0.2) 0%,
+      transparent 50%,
+      hsl(var(--enma-gold) / 0.15) 100%
+    );
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+  }
+
+  .enma-glow:hover::after {
+    opacity: 1;
+  }
+
+  /* Active listening pulse */
+  .listening-pulse {
+    animation: listening-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes listening-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(var(--enma-purple) / 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 8px hsl(var(--enma-purple) / 0);
+    }
+  }
+
+  /* Enhanced button styles */
+  .btn-enhanced {
+    @apply relative overflow-hidden transition-all duration-300;
+    background: linear-gradient(
+      135deg,
+      hsl(0 0% 100% / 0.1) 0%,
+      hsl(0 0% 100% / 0.05) 100%
+    );
+  }
+
+  .btn-enhanced:hover {
+    background: linear-gradient(
+      135deg,
+      hsl(0 0% 100% / 0.15) 0%,
+      hsl(0 0% 100% / 0.08) 100%
+    );
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px hsl(0 0% 0% / 0.3);
+  }
+
+  .btn-enhanced:active {
+    transform: translateY(0);
+  }
+
+  /* Subtle gradient text */
+  .gradient-text {
+    background: linear-gradient(
+      135deg,
+      hsl(0 0% 100%) 0%,
+      hsl(0 0% 70%) 100%
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
 

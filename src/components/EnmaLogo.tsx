@@ -68,16 +68,12 @@ export const EnmaLogo = ({
             style={{ pointerEvents: 'none' }}
           />
           <img
-            src="/enma-logo.png"
+            src="/enma-logo.svg"
             alt="Enma"
             className={cn(
               iconSizes[size],
               "object-contain relative z-10"
             )}
-            style={{ 
-              filter: 'brightness(0.95) contrast(1.05)',
-              mixBlendMode: 'normal'
-            }}
           />
         </motion.div>
       )}
