@@ -6,6 +6,8 @@ import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { Copy, Check, User, RefreshCw, Pencil, FileText, File } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import enmaKatanaLogo from "@/assets/enma-katana-logo.png";
+import { useTransparentImage } from "@/hooks/useTransparentImage";
 
 interface Attachment {
   url: string;
@@ -31,6 +33,7 @@ const ChatMessageComponent = ({
   onEdit 
 }: ChatMessageProps) => {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const assistantLogoSrc = useTransparentImage(enmaKatanaLogo);
 
   const copyToClipboard = async (code: string) => {
     await navigator.clipboard.writeText(code);
@@ -90,9 +93,9 @@ const ChatMessageComponent = ({
           <User size={16} />
         </div>
       ) : (
-        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center glass-strong overflow-hidden">
+        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center border border-border/40 bg-transparent overflow-hidden">
           <img
-            src="/enma-katana-logo.png"
+            src={assistantLogoSrc}
             alt="Enma"
             className="w-full h-full object-cover scale-150"
           />
