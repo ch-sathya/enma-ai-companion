@@ -90,11 +90,13 @@ const ChatMessageComponent = ({
           <User size={16} />
         </div>
       ) : (
-        <img
-          src="/enma-avatar.webp"
-          alt="Enma"
-          className="flex-shrink-0 w-8 h-8 rounded-full object-contain bg-white p-1"
-        />
+        <div className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center glass-strong p-1.5">
+          <img
+            src="/enma-logo.svg"
+            alt="Enma"
+            className="w-full h-full object-contain"
+          />
+        </div>
       )}
 
       {/* Message content */}
@@ -136,7 +138,7 @@ const ChatMessageComponent = ({
                               className="text-muted-foreground hover:text-foreground transition-colors"
                             >
                               {copiedCode === codeString ? (
-                                <Check size={14} className="text-green-400" />
+                                <Check size={14} className="text-emerald-400" />
                               ) : (
                                 <Copy size={14} />
                               )}
@@ -227,9 +229,9 @@ const ChatMessageComponent = ({
               className="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-muted-foreground hover:text-foreground transition-all"
               title="Copy"
             >
-              {copiedCode === content ? (
-                <Check size={14} className="text-green-400" />
-              ) : (
+            {copiedCode === content ? (
+              <Check size={14} className="text-emerald-400" />
+            ) : (
                 <Copy size={14} />
               )}
             </button>

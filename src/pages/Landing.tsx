@@ -76,7 +76,7 @@ export const Landing = () => {
           A sleek, privacy-focused interface for open-source language models.
         </motion.p>
 
-        {/* CTA Button */}
+        {/* CTA Button - Enhanced */}
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -84,16 +84,16 @@ export const Landing = () => {
         >
           <button
             onClick={() => navigate("/chat")}
-            className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-foreground text-background font-medium text-lg transition-all hover:bg-foreground/90 active:scale-[0.98] btn-glow pulse-glow"
+            className="group relative inline-flex items-center gap-3 px-8 py-4 rounded-xl bg-foreground text-background font-medium text-lg transition-all hover:bg-foreground/90 active:scale-[0.98] btn-glow pulse-glow enma-glow"
           >
-            <Sparkles size={20} className="opacity-60" />
-            <span>Enter Enma</span>
+            <Sparkles size={20} className="opacity-70 group-hover:opacity-100 transition-opacity" />
+            <span className="tracking-wide">Enter Enma</span>
             <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
           </button>
         </motion.div>
       </motion.div>
 
-      {/* Features grid */}
+      {/* Features grid - Enhanced */}
       <motion.div
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
@@ -106,13 +106,14 @@ export const Landing = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7 + index * 0.1 }}
+            whileHover={{ scale: 1.02, y: -2 }}
             className="hover-glow"
           >
             <GlassCard
               variant="subtle"
-              className="p-4 h-full text-center glass-glow"
+              className="p-4 h-full text-center glass-glow enma-glow"
             >
-              <h3 className="font-medium text-foreground text-sm mb-1">{feature.title}</h3>
+              <h3 className="font-medium text-foreground text-sm mb-1 tracking-wide">{feature.title}</h3>
               <p className="text-xs text-muted-foreground">{feature.description}</p>
             </GlassCard>
           </motion.div>

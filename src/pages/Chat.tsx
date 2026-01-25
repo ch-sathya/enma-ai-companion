@@ -20,6 +20,7 @@ import { useVoice } from "@/hooks/useVoice";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { getPersonaById, Persona } from "@/data/personas";
 import { Settings } from "lucide-react";
+import { toast } from "sonner";
 import { MessageSkeleton } from "@/components/MessageSkeleton";
 import { AttachedFile } from "@/components/FileAttachment";
 
@@ -162,9 +163,27 @@ export const Chat = () => {
 
   const voice = useVoice({
     onTranscript: handleVoiceTranscript,
+    onWakeWord: () => {
+      // When wake word detected, start main listening mode
+      voice.stopWakeWordDetection?.();
+      toast.success("Hey! I'm listening...");
+    },
+    wakeWordEnabled: preferences.wake_word_enabled,
     voiceEnabled: preferences.voice_enabled,
     preferredVoice: preferences.preferred_voice,
   });
+
+  // Start wake word detection when enabled
+  useEffect(() => {
+    if (preferences.wake_word_enabled && voice.isSupported && !voice.isListening) {
+      voice.startWakeWordDetection?.();
+    }
+    return () => {
+      if (voice.isWakeWordMode) {
+        voice.stopWakeWordDetection?.();
+      }
+    };
+  }, [preferences.wake_word_enabled, voice.isSupported]);
 
   // Destructure voice methods
   const {
@@ -333,23 +352,35 @@ export const Chat = () => {
         <div className="flex-1 overflow-y-auto scroll-smooth" style={{ contain: "content" }}>
           {messages.length === 0 ? (
             // Welcome state
-            <div className="h-full flex flex-col items-center justify-center p-6">
+            <div className="h-full flex flex-col items-center justify-center p-6 text-center">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center text-center max-w-2xl"
+                className="flex flex-col items-center text-center max-w-2xl w-full"
               >
                 <div className="relative">
                   <EnmaLogo size="lg" centered asLink={false} />
                   <SparkleEffect isActive={isLoading} />
                 </div>
-                <p className="text-lg text-foreground mt-3">{greeting}</p>
-                <p className="text-muted-foreground mt-1 mb-6">
+                <p className="text-lg text-foreground mt-3 text-center w-full">{greeting}</p>
+                <p className="text-muted-foreground mt-1 mb-6 text-center w-full">
                   How can I help you today?
                 </p>
                 
+                {/* Wake word indicator */}
+                {preferences.wake_word_enabled && voice.isWakeWordMode && (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mb-4 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs text-muted-foreground flex items-center gap-2"
+                  >
+                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                    Say "Enma" to start
+                  </motion.div>
+                )}
+                
                 {/* Minimal suggestions */}
-                <div className="flex flex-wrap justify-center gap-2">
+                <div className="flex flex-wrap justify-center gap-2 w-full">
                   {[
                     "Write a poem",
                     "Explain something",
@@ -362,7 +393,8 @@ export const Chat = () => {
                       transition={{ delay: 0.3 + index * 0.1, duration: 0.3 }}
                       onClick={() => handleSendMessage(suggestion)}
                       className="px-4 py-2 text-sm text-muted-foreground bg-white/5 rounded-full 
-                                 hover:bg-white/10 hover:text-foreground transition-all border border-white/10"
+                                 hover:bg-white/10 hover:text-foreground transition-all border border-white/10
+                                 hover:scale-105 hover:border-white/20"
                     >
                       {suggestion}
                     </motion.button>

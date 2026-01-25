@@ -29,12 +29,22 @@ export const SettingsPopup = ({
   const [browserVoices, setBrowserVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [isPreviewPlaying, setIsPreviewPlaying] = useState<string | null>(null);
 
-  // Load browser voices with quality sorting
+  const [voicesLoading, setVoicesLoading] = useState(true);
+  
+  // Load browser voices with retry logic for Chrome
   useEffect(() => {
-    if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+    if (typeof window === "undefined" || !("speechSynthesis" in window)) {
+      setVoicesLoading(false);
+      return;
+    }
 
     const loadVoices = () => {
       const voices = window.speechSynthesis.getVoices();
+      if (voices.length === 0) {
+        // Chrome sometimes delays voice loading - retry
+        return false;
+      }
+      
       // Filter to English voices and prioritize high-quality ones
       const englishVoices = voices
         .filter(v => v.lang.startsWith('en'))
@@ -51,10 +61,27 @@ export const SettingsPopup = ({
           return bProvider - aProvider;
         })
         .slice(0, 12); // Limit to top 12 voices
+      
       setBrowserVoices(englishVoices.length > 0 ? englishVoices : voices.slice(0, 12));
+      setVoicesLoading(false);
+      return true;
     };
 
-    loadVoices();
+    // Initial load
+    if (!loadVoices()) {
+      // Retry a few times for Chrome
+      let retries = 0;
+      const retryInterval = setInterval(() => {
+        if (loadVoices() || retries >= 5) {
+          clearInterval(retryInterval);
+          setVoicesLoading(false);
+        }
+        retries++;
+      }, 200);
+      
+      return () => clearInterval(retryInterval);
+    }
+    
     window.speechSynthesis.onvoiceschanged = loadVoices;
 
     return () => {
@@ -269,9 +296,22 @@ export const SettingsPopup = ({
                     </motion.div>
                   )}
 
-                  {voiceEnabled && browserVoices.length === 0 && (
-                    <p className="text-xs text-muted-foreground">
+                  {voiceEnabled && browserVoices.length === 0 && voicesLoading && (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <div className="w-3 h-3 border border-white/20 border-t-white/60 rounded-full animate-spin" />
                       Loading available voices...
+                    </div>
+                  )}
+                  
+                  {voiceEnabled && browserVoices.length === 0 && !voicesLoading && (
+                    <p className="text-xs text-muted-foreground/70">
+                      No voices available. Voice responses will use system default.
+                    </p>
+                  )}
+                  
+                  {voiceEnabled && browserVoices.length > 0 && (
+                    <p className="text-xs text-muted-foreground/60">
+                      {browserVoices.length} voices available
                     </p>
                   )}
                 </div>
