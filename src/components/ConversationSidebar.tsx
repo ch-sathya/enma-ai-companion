@@ -1,7 +1,6 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Plus, Trash2, X, LogOut, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { MessageSquare, Plus, Trash2, X, LogOut, User, ChevronLeft, ChevronRight, WifiOff } from "lucide-react";
 import { GlassCard } from "./GlassCard";
-import { EnmaLogo } from "./EnmaLogo";
 import { ConversationSkeleton } from "./MessageSkeleton";
 import { formatDistanceToNow } from "date-fns";
 
@@ -23,6 +22,7 @@ interface ConversationSidebarProps {
   onLogout: () => void;
   onLogin: () => void;
   isLoading?: boolean;
+  isDemoMode?: boolean;
 }
 
 export const ConversationSidebar = ({
@@ -37,6 +37,7 @@ export const ConversationSidebar = ({
   onLogout,
   onLogin,
   isLoading = false,
+  isDemoMode = false,
 }: ConversationSidebarProps) => {
   return (
     <>
@@ -160,7 +161,18 @@ export const ConversationSidebar = ({
 
           {/* User section */}
           <div className="px-4 py-4 pb-6 border-t border-white/5 mb-safe">
-            {user ? (
+            {isDemoMode ? (
+              // Demo mode - show local storage indicator
+              <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
+                <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
+                  <WifiOff size={16} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-amber-400">Demo Mode</p>
+                  <p className="text-xs text-muted-foreground">Data stored locally</p>
+                </div>
+              </div>
+            ) : user ? (
               <div className="flex items-center gap-3">
                 <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-foreground">
                   <User size={16} />

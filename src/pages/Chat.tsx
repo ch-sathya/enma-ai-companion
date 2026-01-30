@@ -11,16 +11,17 @@ import { AuthModal } from "@/components/AuthModal";
 import { SettingsPopup } from "@/components/SettingsPopup";
 import { EnmaLogo } from "@/components/EnmaLogo";
 import { SparkleEffect } from "@/components/SparkleEffect";
+import { ModeIndicator } from "@/components/ModeIndicator";
 
-import { useChat } from "@/hooks/useChat";
-import { useConversations } from "@/hooks/useConversations";
+import { useChatWrapper } from "@/hooks/useChatWrapper";
+import { useConversationsWrapper } from "@/hooks/useConversationsWrapper";
 import { useSwipeGesture } from "@/hooks/useSwipeGesture";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
-import { useElevenLabsVoice } from "@/hooks/useElevenLabsVoice";
+import { useVoiceWrapper } from "@/hooks/useVoiceWrapper";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
+import { useAppConfig } from "@/config/appConfig";
 import { getPersonaById, Persona } from "@/data/personas";
 import { Settings } from "lucide-react";
-import { toast } from "sonner";
 import { MessageSkeleton } from "@/components/MessageSkeleton";
 import { AttachedFile } from "@/components/FileAttachment";
 
@@ -63,6 +64,7 @@ const saveSettingsToStorage = (settings: ChatSettings) => {
 };
 
 export const Chat = () => {
+  const config = useAppConfig();
   const [user, setUser] = useState<User | null>(null);
   const [settings, setSettings] = useState<ChatSettings>(loadSettings);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -77,6 +79,7 @@ export const Chat = () => {
   // User preferences
   const { preferences, savePreferences } = useUserPreferences(user);
 
+  // Use wrapper hooks that auto-switch between cloud and demo mode
   const {
     conversations,
     currentConversationId,
@@ -85,7 +88,9 @@ export const Chat = () => {
     updateConversationTitle,
     deleteConversation,
     loadConversations,
-  } = useConversations(user?.id || null);
+    addMessage,
+    getMessages,
+  } = useConversationsWrapper(user?.id || null);
 
   const persona = getPersonaById(settings.personaId);
   
@@ -106,8 +111,14 @@ export const Chat = () => {
     systemPrompt: personalizedSystemPrompt,
   }), [settings.model, settings.temperature, settings.topP, settings.maxTokens, personalizedSystemPrompt]);
 
+  // Local chat options for demo mode
+  const localChatOptions = useMemo(() => ({
+    onAddMessage: addMessage,
+    onGetMessages: getMessages,
+  }), [addMessage, getMessages]);
+
   const { messages, isLoading, sendMessage, stopGeneration, loadMessages, clearMessages } =
-    useChat(currentConversationId, chatSettings);
+    useChatWrapper(currentConversationId, chatSettings, localChatOptions);
 
   const handleSendMessageInternal = useCallback(
     async (content: string, attachments?: AttachedFile[]) => {
@@ -161,18 +172,12 @@ export const Chat = () => {
     [handleSendMessageInternal]
   );
 
-  const voice = useElevenLabsVoice({
+  // Use voice wrapper that auto-switches between ElevenLabs and Web Speech API
+  const voice = useVoiceWrapper({
     onTranscript: handleVoiceTranscript,
     voiceEnabled: preferences.voice_enabled,
     preferredVoice: preferences.preferred_voice,
   });
-
-  // Show connection status toast
-  useEffect(() => {
-    if (voice.isConnecting) {
-      // Voice is connecting...
-    }
-  }, [voice.isConnecting]);
 
   // Destructure voice methods
   const { toggleListening } = voice;
@@ -211,7 +216,13 @@ export const Chat = () => {
     onSwipeLeft: closeSidebar,
   });
 
+  // Only set up auth listener in cloud mode
   useEffect(() => {
+    if (config.isDemo) {
+      // In demo mode, no auth needed
+      return;
+    }
+
     supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -222,7 +233,7 @@ export const Chat = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
     });
-  }, [loadConversations]);
+  }, [loadConversations, config.isDemo]);
 
   // Load messages when conversation changes
   useEffect(() => {
@@ -262,6 +273,7 @@ export const Chat = () => {
   });
 
   const handleLogout = async () => {
+    if (config.isDemo) return;
     await supabase.auth.signOut();
     setUser(null);
     setCurrentConversationId(null);
@@ -310,6 +322,7 @@ export const Chat = () => {
         user={user}
         onLogout={handleLogout}
         onLogin={() => setAuthOpen(true)}
+        isDemoMode={config.isDemo}
       />
 
       {/* Main chat area */}
@@ -322,13 +335,16 @@ export const Chat = () => {
         {!sidebarOpen && (
           <div className="h-14 flex-shrink-0 flex items-center justify-between px-4 border-b border-white/5 safe-top">
             <EnmaLogo size="sm" />
-            <button
-              onClick={() => setSettingsPopupOpen(true)}
-              className="p-2 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
-              title="Settings"
-            >
-              <Settings size={18} />
-            </button>
+            <div className="flex items-center gap-2">
+              <ModeIndicator />
+              <button
+                onClick={() => setSettingsPopupOpen(true)}
+                className="p-2 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
+                title="Settings"
+              >
+                <Settings size={18} />
+              </button>
+            </div>
           </div>
         )}
 
@@ -473,12 +489,14 @@ export const Chat = () => {
         onSave={savePreferences}
       />
 
-      {/* Auth modal */}
-      <AuthModal
-        isOpen={authOpen}
-        onClose={() => setAuthOpen(false)}
-        onSuccess={() => loadConversations()}
-      />
+      {/* Auth modal - only show in cloud mode */}
+      {!config.isDemo && (
+        <AuthModal
+          isOpen={authOpen}
+          onClose={() => setAuthOpen(false)}
+          onSuccess={() => loadConversations()}
+        />
+      )}
     </div>
   );
 };
