@@ -2,8 +2,6 @@
 
 A sleek, privacy-focused interface for open-source language models. Features a stunning black & white glassmorphism design with support for multiple AI models, customizable personas, and file attachments.
 
-![Enma](public/enma-logo.svg)
-
 ## Features
 
 - 🤖 **Multiple Models** - Switch between Gemini, GPT-5, and more
