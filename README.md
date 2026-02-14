@@ -1,3 +1,14 @@
+Feel free to tweak the changes
+1. Enma is still incomplete the ai models present in the app are partially working and some are not. 
+2. The load animation and the sidebar need to be tweaked.
+3. The voice assistant and also the voice feedback is not working.
+4. Need to fix all these things and also to add a katana as a logo of the app.
+
+
+
+
+
+
 # Enma - AI Assistant Platform
 
 A sleek, privacy-focused interface for open-source language models. Features a stunning black & white glassmorphism design with support for multiple AI models, customizable personas, and file attachments.
