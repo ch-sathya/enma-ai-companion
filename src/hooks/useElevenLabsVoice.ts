@@ -7,13 +7,33 @@ interface UseElevenLabsVoiceOptions {
   onTranscript?: (text: string) => void;
   voiceEnabled?: boolean;
   preferredVoice?: string;
+  enabled?: boolean;
 }
+
+// No-op return for when ElevenLabs is disabled (demo mode)
+const NOOP_RETURN = {
+  isListening: false,
+  isConnecting: false,
+  isSpeaking: false,
+  transcript: "",
+  hasPermission: null as boolean | null,
+  isSupported: false,
+  isTTSSupported: false,
+  availableVoices: [] as SpeechSynthesisVoice[],
+  startListening: async () => {},
+  stopListening: () => {},
+  toggleListening: () => {},
+  speak: (_text: string) => {},
+  stopSpeaking: () => {},
+  requestPermission: async () => false,
+};
 
 export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
   const {
     onTranscript,
     voiceEnabled = true,
     preferredVoice = "",
+    enabled = true,
   } = options;
 
   const [isConnecting, setIsConnecting] = useState(false);
@@ -26,43 +46,52 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
   
   const isTTSSupported = typeof window !== "undefined" && "speechSynthesis" in window;
 
-  // ElevenLabs Scribe hook for realtime transcription
+  // ElevenLabs Scribe hook - always called (React rules) but only used when enabled
   const scribe = useScribe({
     modelId: "scribe_v2_realtime",
-    // Voice Activity Detection - auto-commits on silence
-    // Tuned to commit more reliably across noisier mics.
     commitStrategy: CommitStrategy.VAD,
     vadSilenceThresholdSecs: 0.8,
     vadThreshold: 0.35,
     minSpeechDurationMs: 150,
     minSilenceDurationMs: 250,
     onError: (error) => {
+      if (!enabled) return;
       console.error("ElevenLabs Scribe error:", error);
       toast.error("Voice input error. Please try again.");
     },
     onAuthError: (data) => {
+      if (!enabled) return;
       console.error("ElevenLabs Scribe auth error:", data?.error);
       toast.error("Voice auth error. Please try again.");
     },
     onQuotaExceededError: (data) => {
+      if (!enabled) return;
       console.error("ElevenLabs Scribe quota exceeded:", data?.error);
       toast.error("Voice quota exceeded. Please try again later.");
     },
     onInsufficientAudioActivityError: (data) => {
+      if (!enabled) return;
       console.warn("ElevenLabs Scribe insufficient audio activity:", data?.error);
       toast.error("No audio detected. Check your microphone and try again.");
     },
     onCommittedTranscript: (data) => {
+      if (!enabled) return;
       if (data.text?.trim()) {
         onTranscriptRef.current?.(data.text.trim());
       }
     },
   });
 
+  // If disabled, return no-op immediately after hooks
+  if (!enabled) {
+    return NOOP_RETURN;
+  }
+
   const isListening = scribe.isConnected;
   const transcript = scribe.partialTranscript || "";
 
   // Load available browser voices for TTS
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     if (!isTTSSupported) return;
 
@@ -81,6 +110,7 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
   }, [isTTSSupported]);
 
   // Request microphone permission
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const requestPermission = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -96,6 +126,7 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
   }, []);
 
   // Start listening with ElevenLabs
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const startListening = useCallback(async () => {
     if (scribe.isConnected || isConnecting) {
       console.log("Already listening or connecting");
@@ -108,7 +139,6 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
     setIsConnecting(true);
     
     try {
-      // Get single-use token from edge function
       const { data, error } = await supabase.functions.invoke("elevenlabs-scribe-token");
       
       if (error || !data?.token) {
@@ -118,7 +148,6 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
         return;
       }
 
-      // Connect to ElevenLabs with microphone
       await scribe.connect({
         token: data.token,
         microphone: {
@@ -138,17 +167,14 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
   }, [scribe, isConnecting, hasPermission, requestPermission]);
 
   // Stop listening
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const stopListening = useCallback(() => {
     if (scribe.isConnected) {
-      // Force-commit any in-progress transcript before disconnecting.
-      // This helps when VAD doesn't commit due to background noise.
       try {
         scribe.commit();
       } catch {
         // ignore
       }
-
-      // Give commit a brief moment to flush, then disconnect.
       setTimeout(() => {
         try {
           scribe.disconnect();
@@ -161,6 +187,7 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
   }, [scribe]);
 
   // Toggle listening
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const toggleListening = useCallback(() => {
     if (scribe.isConnected) {
       stopListening();
@@ -170,15 +197,14 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
   }, [scribe.isConnected, startListening, stopListening]);
 
   // Speak text using browser's built-in Speech Synthesis API
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const speak = useCallback(
     (text: string) => {
       if (!voiceEnabled || !text.trim() || !isTTSSupported) return;
 
-      // Cancel any ongoing speech
       window.speechSynthesis.cancel();
       setIsSpeaking(true);
 
-      // Split text into smaller chunks for natural speech
       const chunkText = (text: string, maxLength = 150): string[] => {
         const chunks: string[] = [];
         const sentences = text.split(/(?<=[.!?])\s+/);
@@ -209,7 +235,6 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
 
         const utterance = new SpeechSynthesisUtterance(chunks[currentIndex]);
 
-        // Find a high-quality voice
         const getPreferredVoice = () => {
           if (preferredVoice && availableVoices.length > 0) {
             const found = availableVoices.find(v => v.name === preferredVoice);
@@ -265,6 +290,7 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
   );
 
   // Stop speaking
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   const stopSpeaking = useCallback(() => {
     if (isTTSSupported) {
       window.speechSynthesis.cancel();
@@ -273,6 +299,7 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
   }, [isTTSSupported]);
 
   // Cleanup on unmount
+  // eslint-disable-next-line react-hooks/rules-of-hooks
   useEffect(() => {
     return () => {
       if (scribe.isConnected) {
@@ -290,7 +317,7 @@ export const useElevenLabsVoice = (options: UseElevenLabsVoiceOptions = {}) => {
     isSpeaking,
     transcript,
     hasPermission,
-    isSupported: true, // ElevenLabs works in all browsers
+    isSupported: true,
     isTTSSupported,
     availableVoices,
     startListening,

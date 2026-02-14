@@ -16,8 +16,8 @@ export interface ConversationItem {
 export const useConversationsWrapper = (userId: string | null) => {
   const config = useAppConfig();
   
-  // Use appropriate implementation based on mode
-  const remoteHook = useConversations(userId);
+  // Only enable remote hook when NOT in demo mode
+  const remoteHook = useConversations(userId, !config.isDemo);
   const localHook = useLocalConversations();
 
   if (config.isDemo) {

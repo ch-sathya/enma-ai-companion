@@ -11,12 +11,13 @@ interface Conversation {
   updated_at: string;
 }
 
-export const useConversations = (userId: string | null) => {
+export const useConversations = (userId: string | null, enabled: boolean = true) => {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
   const loadConversations = useCallback(async () => {
+    if (!enabled) return;
     setIsLoading(true);
     const { data, error } = await supabase
       .from("conversations")
@@ -27,14 +28,17 @@ export const useConversations = (userId: string | null) => {
       setConversations(data as Conversation[]);
     }
     setIsLoading(false);
-  }, []);
+  }, [enabled]);
 
   useEffect(() => {
-    loadConversations();
-  }, [loadConversations, userId]);
+    if (enabled) {
+      loadConversations();
+    }
+  }, [loadConversations, userId, enabled]);
 
   const createConversation = useCallback(
     async (model: string = "google/gemini-3-flash-preview") => {
+      if (!enabled) return null;
       const { data, error } = await supabase
         .from("conversations")
         .insert({
@@ -53,10 +57,11 @@ export const useConversations = (userId: string | null) => {
       }
       return null;
     },
-    [userId]
+    [userId, enabled]
   );
 
   const updateConversationTitle = useCallback(async (id: string, title: string) => {
+    if (!enabled) return;
     const { error } = await supabase
       .from("conversations")
       .update({ title })
@@ -67,9 +72,10 @@ export const useConversations = (userId: string | null) => {
         prev.map((c) => (c.id === id ? { ...c, title } : c))
       );
     }
-  }, []);
+  }, [enabled]);
 
   const deleteConversation = useCallback(async (id: string) => {
+    if (!enabled) return;
     const { error } = await supabase.from("conversations").delete().eq("id", id);
 
     if (!error) {
@@ -78,7 +84,7 @@ export const useConversations = (userId: string | null) => {
         setCurrentConversationId(null);
       }
     }
-  }, [currentConversationId]);
+  }, [currentConversationId, enabled]);
 
   const getCurrentConversation = useCallback(() => {
     return conversations.find((c) => c.id === currentConversationId) || null;

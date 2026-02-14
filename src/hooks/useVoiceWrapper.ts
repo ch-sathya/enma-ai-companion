@@ -22,11 +22,12 @@ export const useVoiceWrapper = (options: VoiceOptions = {}) => {
     preferredVoice: options.preferredVoice,
   });
 
-  // ElevenLabs API (requires backend)
+  // ElevenLabs API - only initialize when NOT in demo mode
   const elevenLabsHook = useElevenLabsVoice({
-    onTranscript: options.onTranscript,
-    voiceEnabled: options.voiceEnabled,
+    onTranscript: config.isDemo ? undefined : options.onTranscript,
+    voiceEnabled: config.isDemo ? false : options.voiceEnabled,
     preferredVoice: options.preferredVoice,
+    enabled: !config.isDemo,
   });
 
   if (config.isDemo) {
@@ -35,7 +36,7 @@ export const useVoiceWrapper = (options: VoiceOptions = {}) => {
       isListening: webSpeechHook.isListening,
       isSpeaking: webSpeechHook.isSpeaking,
       isSupported: webSpeechHook.isSupported,
-      isConnecting: false, // Web Speech doesn't have connection state
+      isConnecting: false,
       transcript: webSpeechHook.transcript,
       toggleListening: webSpeechHook.toggleListening,
       speak: webSpeechHook.speak,
@@ -56,7 +57,6 @@ export const useVoiceWrapper = (options: VoiceOptions = {}) => {
     toggleListening: elevenLabsHook.toggleListening,
     speak: elevenLabsHook.speak,
     stopSpeaking: elevenLabsHook.stopSpeaking,
-    // Wake word not supported in ElevenLabs mode
     startWakeWordDetection: () => {},
     stopWakeWordDetection: () => {},
     isWakeWordMode: false,
