@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Plus, Trash2, X, LogOut, User, ChevronLeft, ChevronRight, WifiOff } from "lucide-react";
+import { MessageSquare, Plus, Trash2, X, ChevronLeft, ChevronRight, Cpu, KeyRound } from "lucide-react";
 import { GlassCard } from "./GlassCard";
 import { ConversationSkeleton } from "./MessageSkeleton";
 import { formatDistanceToNow } from "date-fns";
@@ -18,11 +18,11 @@ interface ConversationSidebarProps {
   onSelectConversation: (id: string) => void;
   onNewConversation: () => void;
   onDeleteConversation: (id: string) => void;
-  user: { email?: string } | null;
-  onLogout: () => void;
-  onLogin: () => void;
   isLoading?: boolean;
-  isDemoMode?: boolean;
+  providerLabel?: string;
+  modelLabel?: string;
+  isReady?: boolean;
+  onOpenProviders?: () => void;
 }
 
 export const ConversationSidebar = ({
@@ -33,11 +33,11 @@ export const ConversationSidebar = ({
   onSelectConversation,
   onNewConversation,
   onDeleteConversation,
-  user,
-  onLogout,
-  onLogin,
   isLoading = false,
-  isDemoMode = false,
+  providerLabel,
+  modelLabel,
+  isReady = false,
+  onOpenProviders,
 }: ConversationSidebarProps) => {
   return (
     <>
@@ -159,44 +159,25 @@ export const ConversationSidebar = ({
             )}
           </div>
 
-          {/* User section */}
+          {/* Provider section */}
           <div className="px-4 py-4 pb-6 border-t border-white/5 mb-safe">
-            {isDemoMode ? (
-              // Demo mode - show local storage indicator
-              <div className="flex items-center gap-3 px-2 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20">
-                <div className="w-8 h-8 rounded-full bg-amber-500/20 flex items-center justify-center text-amber-400">
-                  <WifiOff size={16} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-amber-400">Demo Mode</p>
-                  <p className="text-xs text-muted-foreground">Data stored locally</p>
-                </div>
+            <button
+              onClick={onOpenProviders}
+              className="w-full flex items-center gap-3 px-3 py-3 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 transition-all text-left"
+              title="Configure model"
+            >
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isReady ? "bg-emerald-500/15 text-emerald-300" : "bg-amber-500/15 text-amber-300"}`}>
+                {isReady ? <Cpu size={16} /> : <KeyRound size={16} />}
               </div>
-            ) : user ? (
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-foreground">
-                  <User size={16} />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm truncate">{user.email}</p>
-                </div>
-                <button
-                  onClick={onLogout}
-                  className="p-2 rounded-lg hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
-                  title="Sign out"
-                >
-                  <LogOut size={16} />
-                </button>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm text-foreground truncate">
+                  {isReady ? providerLabel : "Connect a model"}
+                </p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {isReady ? modelLabel : "Bring your own API key"}
+                </p>
               </div>
-            ) : (
-              <button
-                onClick={onLogin}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3.5 rounded-xl bg-white/10 hover:bg-white/15 text-foreground border border-white/10 transition-all hover:scale-[1.02]"
-              >
-                <User size={18} />
-                <span className="font-medium">Sign in to save chats</span>
-              </button>
-            )}
+            </button>
           </div>
         </GlassCard>
       </motion.aside>
