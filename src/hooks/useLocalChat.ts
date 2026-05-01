@@ -1,6 +1,8 @@
 import { useState, useCallback, useRef } from "react";
 import { streamMockResponse } from "@/utils/mockChat";
 import { AttachedFile } from "@/components/FileAttachment";
+import { useProviders } from "@/hooks/useProviders";
+import type { ChatMessage, ContentPart } from "@/lib/providers";
 
 interface Attachment {
   url: string;
@@ -32,42 +34,51 @@ interface LocalChatOptions {
   ) => { id: string };
   onUpdateMessage?: (conversationId: string, messageId: string, content: string) => void;
   onGetMessages?: (conversationId: string) => Message[];
+  onRequestProviderSetup?: () => void;
 }
+
+const MAX_ATTACHMENT_BYTES = 4 * 1024 * 1024;
+
+const fileToDataUrl = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+const buildContent = (text: string, atts: Attachment[]): string | ContentPart[] => {
+  if (atts.length === 0) return text;
+  const parts: ContentPart[] = [];
+  if (text) parts.push({ type: "text", text });
+  for (const a of atts) {
+    if (a.type === "image") {
+      parts.push({ type: "image_url", image_url: { url: a.url } });
+    }
+  }
+  return parts.length > 0 ? parts : text;
+};
 
 export const useLocalChat = (
   conversationId: string | null,
   settings: ChatSettings,
   options: LocalChatOptions = {}
 ) => {
-  const { onAddMessage, onUpdateMessage, onGetMessages } = options;
-  
+  const { onAddMessage, onGetMessages, onRequestProviderSetup } = options;
+  const { activeProvider, activeSettings, isReady } = useProviders();
+
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const loadMessages = useCallback(
     (convId: string) => {
-      if (onGetMessages) {
-        const loaded = onGetMessages(convId);
-        setMessages(loaded);
-      }
+      if (onGetMessages) setMessages(onGetMessages(convId));
     },
     [onGetMessages]
   );
 
-  const clearMessages = useCallback(() => {
-    setMessages([]);
-  }, []);
-
-  // Convert file to base64 data URL for local storage
-  const fileToDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
+  const clearMessages = useCallback(() => setMessages([]), []);
 
   const sendMessage = useCallback(
     async (content: string, convId: string, attachments?: AttachedFile[]) => {
@@ -76,101 +87,113 @@ export const useLocalChat = (
 
       setIsLoading(true);
 
-      // Process attachments locally (convert to base64)
-      let processedAttachments: Attachment[] = [];
-      if (attachments && attachments.length > 0) {
+      // Process attachments → base64
+      const processed: Attachment[] = [];
+      if (attachments) {
         for (const att of attachments) {
+          if (att.file.size > MAX_ATTACHMENT_BYTES) {
+            console.warn("Attachment too large, skipping:", att.file.name);
+            continue;
+          }
           try {
             const dataUrl = await fileToDataUrl(att.file);
-            processedAttachments.push({
-              url: dataUrl,
-              type: att.type,
-              name: att.file.name,
-            });
-          } catch (error) {
-            console.error("Failed to process attachment:", error);
+            processed.push({ url: dataUrl, type: att.type, name: att.file.name });
+          } catch (e) {
+            console.error("Attachment processing failed", e);
           }
         }
       }
 
-      // Add user message
-      const userMsgId = crypto.randomUUID();
       const userMsg: Message = {
-        id: userMsgId,
+        id: crypto.randomUUID(),
         role: "user",
         content,
-        attachments: processedAttachments,
+        attachments: processed,
       };
       setMessages((prev) => [...prev, userMsg]);
+      onAddMessage?.(convId, "user", content, processed);
 
-      // Save to local storage if handler provided
-      if (onAddMessage) {
-        onAddMessage(convId, "user", content, processedAttachments);
-      }
-
-      // Create abort controller
       abortControllerRef.current = new AbortController();
-
-      // Add empty assistant message for streaming
       const assistantMsgId = crypto.randomUUID();
-      setMessages((prev) => [
-        ...prev,
-        { id: assistantMsgId, role: "assistant", content: "" },
-      ]);
+      setMessages((prev) => [...prev, { id: assistantMsgId, role: "assistant", content: "" }]);
 
       let assistantContent = "";
+      const onDelta = (delta: string) => {
+        assistantContent += delta;
+        setMessages((prev) =>
+          prev.map((m) => (m.id === assistantMsgId ? { ...m, content: assistantContent } : m))
+        );
+      };
 
       try {
-        await streamMockResponse(
-          (chunk) => {
-            assistantContent += chunk;
-            setMessages((prev) =>
-              prev.map((m) =>
-                m.id === assistantMsgId ? { ...m, content: assistantContent } : m
-              )
-            );
-          },
-          () => {
-            // Save assistant message to local storage
-            if (onAddMessage) {
-              onAddMessage(convId, "assistant", assistantContent);
-            }
-          },
-          abortControllerRef.current.signal
-        );
-      } catch (error: any) {
-        if (error.name !== "AbortError") {
-          console.error("Chat error:", error);
-          setMessages((prev) => [
-            ...prev.filter((m) => m.id !== assistantMsgId),
-            {
-              id: crypto.randomUUID(),
-              role: "assistant",
-              content: `Error: ${error.message || "Failed to get response"}`,
+        if (isReady && activeProvider && activeSettings) {
+          // Build provider message history from currently-rendered messages (excluding the empty assistant placeholder)
+          const history: ChatMessage[] = [...messages, userMsg].map((m) => ({
+            role: m.role,
+            content: buildContent(m.content, m.attachments || []),
+          }));
+
+          await activeProvider.streamChat({
+            apiKey: activeSettings.apiKey,
+            baseUrl: activeSettings.baseUrl,
+            model: activeSettings.model,
+            messages: history,
+            systemPrompt: settings.systemPrompt,
+            temperature: settings.temperature,
+            topP: settings.topP,
+            maxTokens: settings.maxTokens,
+            signal: abortControllerRef.current.signal,
+            onDelta,
+          });
+
+          if (assistantContent) {
+            onAddMessage?.(convId, "assistant", assistantContent);
+          }
+        } else {
+          // Demo mode — no provider configured
+          await streamMockResponse(
+            onDelta,
+            () => {
+              if (assistantContent) onAddMessage?.(convId, "assistant", assistantContent);
             },
-          ]);
+            abortControllerRef.current.signal
+          );
+          // Nudge user to set up
+          onRequestProviderSetup?.();
+        }
+      } catch (error: any) {
+        if (error?.name !== "AbortError") {
+          console.error("Chat error:", error);
+          const errMsg = `**Connection error**\n\n${error?.message || "Failed to reach the model"}.\n\nCheck your API key, model name, and network — then try again.`;
+          setMessages((prev) =>
+            prev.map((m) => (m.id === assistantMsgId ? { ...m, content: errMsg } : m))
+          );
+          onAddMessage?.(convId, "assistant", errMsg);
         }
       } finally {
         setIsLoading(false);
         abortControllerRef.current = null;
       }
     },
-    [isLoading, onAddMessage]
+    [
+      isLoading,
+      messages,
+      onAddMessage,
+      isReady,
+      activeProvider,
+      activeSettings,
+      settings.systemPrompt,
+      settings.temperature,
+      settings.topP,
+      settings.maxTokens,
+      onRequestProviderSetup,
+    ]
   );
 
   const stopGeneration = useCallback(() => {
-    if (abortControllerRef.current) {
-      abortControllerRef.current.abort();
-      setIsLoading(false);
-    }
+    abortControllerRef.current?.abort();
+    setIsLoading(false);
   }, []);
 
-  return {
-    messages,
-    isLoading,
-    sendMessage,
-    stopGeneration,
-    loadMessages,
-    clearMessages,
-  };
+  return { messages, isLoading, sendMessage, stopGeneration, loadMessages, clearMessages };
 };

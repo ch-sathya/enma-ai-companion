@@ -1,6 +1,4 @@
 import { useState, useCallback, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
 
 export interface UserPreferences {
   display_name: string | null;
@@ -13,81 +11,42 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   display_name: null,
   voice_enabled: false,
   wake_word_enabled: false,
-  preferred_voice: "EXAVITQu4vr4xnSDxMaL",
+  preferred_voice: "",
 };
 
-// Local storage key for guests
-const GUEST_PREFERENCES_KEY = "enma_guest_preferences";
+const STORAGE_KEY = "enma_preferences";
 
-export const useUserPreferences = (user: User | null) => {
+export const useUserPreferences = (_user?: unknown) => {
   const [preferences, setPreferences] = useState<UserPreferences>(DEFAULT_PREFERENCES);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load preferences
-  const loadPreferences = useCallback(async () => {
-    setIsLoading(true);
-
-    if (user) {
-      // Load from database for authenticated users
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("display_name, voice_enabled, wake_word_enabled, preferred_voice")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (!error && data) {
-        setPreferences({
-          display_name: data.display_name,
-          voice_enabled: data.voice_enabled ?? false,
-          wake_word_enabled: data.wake_word_enabled ?? false,
-          preferred_voice: data.preferred_voice ?? "EXAVITQu4vr4xnSDxMaL",
-        });
-      }
-    } else {
-      // Load from localStorage for guests
-      const stored = localStorage.getItem(GUEST_PREFERENCES_KEY);
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
-        try {
-          const parsed = JSON.parse(stored);
-          setPreferences({ ...DEFAULT_PREFERENCES, ...parsed });
-        } catch {
-          setPreferences(DEFAULT_PREFERENCES);
-        }
+        setPreferences({ ...DEFAULT_PREFERENCES, ...JSON.parse(stored) });
       }
+    } catch {
+      // ignore
     }
-
     setIsLoading(false);
-  }, [user]);
+  }, []);
 
-  // Save preferences
   const savePreferences = useCallback(
     async (updates: Partial<UserPreferences>) => {
-      const newPreferences = { ...preferences, ...updates };
-      setPreferences(newPreferences);
-
-      if (user) {
-        // Save to database for authenticated users (upsert in case profile row doesn't exist yet)
-        await supabase
-          .from("profiles")
-          .upsert(
-            {
-              user_id: user.id,
-              display_name: newPreferences.display_name,
-              voice_enabled: newPreferences.voice_enabled,
-              wake_word_enabled: newPreferences.wake_word_enabled,
-              preferred_voice: newPreferences.preferred_voice,
-            },
-            { onConflict: "user_id" }
-          );
-      } else {
-        // Save to localStorage for guests
-        localStorage.setItem(GUEST_PREFERENCES_KEY, JSON.stringify(newPreferences));
-      }
+      setPreferences((prev) => {
+        const next = { ...prev, ...updates };
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+        } catch {
+          // ignore
+        }
+        return next;
+      });
     },
-    [user, preferences]
+    []
   );
 
-  // Update single preference
   const updatePreference = useCallback(
     async <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
       await savePreferences({ [key]: value });
@@ -95,16 +54,11 @@ export const useUserPreferences = (user: User | null) => {
     [savePreferences]
   );
 
-  // Load on mount and user change
-  useEffect(() => {
-    loadPreferences();
-  }, [loadPreferences]);
-
   return {
     preferences,
     isLoading,
     savePreferences,
     updatePreference,
-    reloadPreferences: loadPreferences,
+    reloadPreferences: () => {},
   };
 };
