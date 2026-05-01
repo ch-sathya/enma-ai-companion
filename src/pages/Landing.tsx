@@ -4,14 +4,14 @@ import { ArrowRight, Sparkles } from "lucide-react";
 import { EnmaLogo } from "@/components/EnmaLogo";
 import { GlassCard } from "@/components/GlassCard";
 const features = [{
-  title: "Multiple Models",
-  description: "Gemini, GPT, and more"
+  title: "Any Model",
+  description: "OpenAI, Claude, Gemini, Groq, Ollama"
 }, {
   title: "Privacy First",
-  description: "Local-first architecture"
+  description: "Keys & chats stay in your browser"
 }, {
   title: "Customizable",
-  description: "Personas for every task"
+  description: "Personas, prompts, voice"
 }, {
   title: "Real-time",
   description: "Streaming responses"
@@ -72,7 +72,7 @@ export const Landing = () => {
         delay: 0.3,
         duration: 0.8
       }} className="text-muted-foreground text-lg md:text-xl mb-16 max-w-xl mx-auto leading-relaxed">
-          A sleek, privacy-focused interface for open-source language models.
+          A sleek, standalone chat interface for any LLM. Bring your own key — your data never leaves your device.
         </motion.p>
 
         {/* CTA Button - Enhanced */}
