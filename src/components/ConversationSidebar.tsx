@@ -139,8 +139,17 @@ export const ConversationSidebar = ({
             </button>
           </div>
 
+          {/* Assistant nav */}
+          <div className="px-3 pb-2 space-y-0.5">
+            {onOpenBriefing && <NavItem icon={Sun} label="Today's briefing" onClick={onOpenBriefing} />}
+            {onOpenTasks && <NavItem icon={ListChecks} label="Tasks" badge={openTaskCount} onClick={onOpenTasks} />}
+            {onOpenNotes && <NavItem icon={NotebookPen} label="Notes" onClick={onOpenNotes} />}
+            {onOpenMemory && <NavItem icon={Brain} label="Memory" badge={memories.length} onClick={onOpenMemory} />}
+          </div>
+
           {/* Conversations list */}
           <div className="flex-1 overflow-y-auto px-4 pb-4">
+            <p className="px-1 pb-2 text-[10px] uppercase tracking-wider text-muted-foreground/60">Conversations</p>
             {isLoading ? (
               <ConversationSkeleton />
             ) : (
