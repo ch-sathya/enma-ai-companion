@@ -3,6 +3,13 @@ import { streamMockResponse } from "@/utils/mockChat";
 import { AttachedFile } from "@/components/FileAttachment";
 import { useProviders } from "@/hooks/useProviders";
 import type { ChatMessage, ContentPart } from "@/lib/providers";
+import { handleSlash } from "@/lib/assistant/slashCommands";
+import { processDirectives } from "@/lib/assistant/directives";
+import { buildSystemPrompt } from "@/lib/assistant/contextBuilder";
+import { loadProfile } from "@/lib/assistant/profile";
+import { loadMemories } from "@/lib/assistant/memory";
+import { loadTasks } from "@/lib/assistant/tasks";
+import { toast } from "sonner";
 
 interface Attachment {
   url: string;
@@ -59,6 +66,12 @@ const buildContent = (text: string, atts: Attachment[]): string | ContentPart[] 
   return parts.length > 0 ? parts : text;
 };
 
+const fireEvents = () => {
+  window.dispatchEvent(new Event("enma:tasks-change"));
+  window.dispatchEvent(new Event("enma:memories-change"));
+  window.dispatchEvent(new Event("enma:notes-change"));
+};
+
 export const useLocalChat = (
   conversationId: string | null,
   settings: ChatSettings,
@@ -85,6 +98,18 @@ export const useLocalChat = (
       if (!content.trim() && (!attachments || attachments.length === 0)) return;
       if (isLoading) return;
 
+      // ---- Slash-command short-circuit ----
+      const slash = content.trim().startsWith("/") ? handleSlash(content) : { handled: false } as ReturnType<typeof handleSlash>;
+      if (slash.handled && slash.reply) {
+        const userMsg: Message = { id: crypto.randomUUID(), role: "user", content };
+        const replyMsg: Message = { id: crypto.randomUUID(), role: "assistant", content: slash.reply };
+        setMessages((prev) => [...prev, userMsg, replyMsg]);
+        onAddMessage?.(convId, "user", content);
+        onAddMessage?.(convId, "assistant", slash.reply);
+        return;
+      }
+      const effectiveContent = slash.rewritten || content;
+
       setIsLoading(true);
 
       // Process attachments → base64
@@ -107,11 +132,11 @@ export const useLocalChat = (
       const userMsg: Message = {
         id: crypto.randomUUID(),
         role: "user",
-        content,
+        content: effectiveContent,
         attachments: processed,
       };
       setMessages((prev) => [...prev, userMsg]);
-      onAddMessage?.(convId, "user", content, processed);
+      onAddMessage?.(convId, "user", effectiveContent, processed);
 
       abortControllerRef.current = new AbortController();
       const assistantMsgId = crypto.randomUUID();
@@ -125,9 +150,16 @@ export const useLocalChat = (
         );
       };
 
+      // Build personalised system prompt fresh from local stores
+      const finalSystemPrompt = buildSystemPrompt({
+        basePersonaPrompt: settings.systemPrompt,
+        profile: loadProfile(),
+        memories: loadMemories(),
+        tasks: loadTasks(),
+      });
+
       try {
         if (isReady && activeProvider && activeSettings) {
-          // Build provider message history from currently-rendered messages (excluding the empty assistant placeholder)
           const history: ChatMessage[] = [...messages, userMsg].map((m) => ({
             role: m.role,
             content: buildContent(m.content, m.attachments || []),
@@ -138,39 +170,49 @@ export const useLocalChat = (
             baseUrl: activeSettings.baseUrl,
             model: activeSettings.model,
             messages: history,
-            systemPrompt: settings.systemPrompt,
+            systemPrompt: finalSystemPrompt,
             temperature: settings.temperature,
             topP: settings.topP,
             maxTokens: settings.maxTokens,
             signal: abortControllerRef.current.signal,
             onDelta,
           });
-
-          if (assistantContent) {
-            onAddMessage?.(convId, "assistant", assistantContent);
-          }
         } else {
-          // Demo mode — no provider configured
           await streamMockResponse(
             onDelta,
-            () => {
-              if (assistantContent) onAddMessage?.(convId, "assistant", assistantContent);
-            },
+            () => undefined,
             abortControllerRef.current.signal
           );
-          // Nudge user to set up
           onRequestProviderSetup?.();
         }
       } catch (error: any) {
         if (error?.name !== "AbortError") {
           console.error("Chat error:", error);
           const errMsg = `**Connection error**\n\n${error?.message || "Failed to reach the model"}.\n\nCheck your API key, model name, and network — then try again.`;
+          assistantContent = errMsg;
           setMessages((prev) =>
             prev.map((m) => (m.id === assistantMsgId ? { ...m, content: errMsg } : m))
           );
-          onAddMessage?.(convId, "assistant", errMsg);
         }
       } finally {
+        // Process directives & clean output
+        if (assistantContent) {
+          const { cleaned, applied } = processDirectives(assistantContent);
+          if (cleaned !== assistantContent) {
+            setMessages((prev) =>
+              prev.map((m) => (m.id === assistantMsgId ? { ...m, content: cleaned } : m))
+            );
+            assistantContent = cleaned;
+          }
+          if (applied.length) {
+            for (const a of applied) {
+              const verb = a.kind === "remember" ? "Remembered" : a.kind === "task" ? "Task added" : "Note saved";
+              toast.success(`${verb}: ${a.label}`);
+            }
+            fireEvents();
+          }
+          if (assistantContent) onAddMessage?.(convId, "assistant", assistantContent);
+        }
         setIsLoading(false);
         abortControllerRef.current = null;
       }

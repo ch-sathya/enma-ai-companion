@@ -6,14 +6,21 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
 import Chat from "./pages/Chat";
 import NotFound from "./pages/NotFound";
+import { useReminderPoller } from "./hooks/useReminderPoller";
 
 const queryClient = new QueryClient();
+
+const RemindersBoot = () => {
+  useReminderPoller();
+  return null;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
+      <RemindersBoot />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />

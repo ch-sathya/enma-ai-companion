@@ -1,8 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Plus, Trash2, X, ChevronLeft, ChevronRight, Cpu, KeyRound } from "lucide-react";
+import { MessageSquare, Plus, Trash2, X, ChevronLeft, ChevronRight, Cpu, KeyRound, ListChecks, Brain, NotebookPen, Sun } from "lucide-react";
 import { GlassCard } from "./GlassCard";
 import { ConversationSkeleton } from "./MessageSkeleton";
 import { formatDistanceToNow } from "date-fns";
+import { useTasks } from "@/hooks/useTasks";
+import { useMemories } from "@/hooks/useMemories";
 
 interface Conversation {
   id: string;
@@ -23,6 +25,10 @@ interface ConversationSidebarProps {
   modelLabel?: string;
   isReady?: boolean;
   onOpenProviders?: () => void;
+  onOpenTasks?: () => void;
+  onOpenNotes?: () => void;
+  onOpenMemory?: () => void;
+  onOpenBriefing?: () => void;
 }
 
 export const ConversationSidebar = ({
@@ -38,7 +44,28 @@ export const ConversationSidebar = ({
   modelLabel,
   isReady = false,
   onOpenProviders,
+  onOpenTasks,
+  onOpenNotes,
+  onOpenMemory,
+  onOpenBriefing,
 }: ConversationSidebarProps) => {
+  const { tasks } = useTasks();
+  const { memories } = useMemories();
+  const openTaskCount = tasks.filter((t) => !t.done).length;
+
+  const NavItem = ({ icon: Icon, label, badge, onClick }: { icon: typeof MessageSquare; label: string; badge?: number; onClick?: () => void }) => (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-white/5 hover:text-foreground transition-colors"
+    >
+      <Icon size={16} className="flex-shrink-0" />
+      <span className="flex-1 text-left truncate">{label}</span>
+      {badge !== undefined && badge > 0 && (
+        <span className="px-1.5 py-0.5 rounded-full bg-white/10 text-[10px] text-foreground">{badge}</span>
+      )}
+    </button>
+  );
+
   return (
     <>
       {/* Collapsed state - floating edge rail */}
@@ -112,8 +139,17 @@ export const ConversationSidebar = ({
             </button>
           </div>
 
+          {/* Assistant nav */}
+          <div className="px-3 pb-2 space-y-0.5">
+            {onOpenBriefing && <NavItem icon={Sun} label="Today's briefing" onClick={onOpenBriefing} />}
+            {onOpenTasks && <NavItem icon={ListChecks} label="Tasks" badge={openTaskCount} onClick={onOpenTasks} />}
+            {onOpenNotes && <NavItem icon={NotebookPen} label="Notes" onClick={onOpenNotes} />}
+            {onOpenMemory && <NavItem icon={Brain} label="Memory" badge={memories.length} onClick={onOpenMemory} />}
+          </div>
+
           {/* Conversations list */}
           <div className="flex-1 overflow-y-auto px-4 pb-4">
+            <p className="px-1 pb-2 text-[10px] uppercase tracking-wider text-muted-foreground/60">Conversations</p>
             {isLoading ? (
               <ConversationSkeleton />
             ) : (

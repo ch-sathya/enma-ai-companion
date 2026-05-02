@@ -17,10 +17,16 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useVoice } from "@/hooks/useVoice";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useProviders } from "@/hooks/useProviders";
+import { useProfile } from "@/hooks/useProfile";
 import { getPersonaById, Persona } from "@/data/personas";
 import { Settings, Sparkles, KeyRound } from "lucide-react";
 import { MessageSkeleton } from "@/components/MessageSkeleton";
 import { AttachedFile } from "@/components/FileAttachment";
+import { TasksPanel } from "@/components/assistant/TasksPanel";
+import { NotesPanel } from "@/components/assistant/NotesPanel";
+import { MemoryPanel } from "@/components/assistant/MemoryPanel";
+import { OnboardingWizard } from "@/components/assistant/OnboardingWizard";
+import { DailyBriefing } from "@/components/assistant/DailyBriefing";
 
 interface ChatSettings {
   model: string;
@@ -34,7 +40,7 @@ const SETTINGS_KEY = "enma-chat-settings";
 
 const DEFAULT_SETTINGS: ChatSettings = {
   model: "default",
-  personaId: "general",
+  personaId: "assistant",
   temperature: 0.7,
   topP: 0.9,
   maxTokens: 2048,
@@ -65,9 +71,20 @@ export const Chat = () => {
   const [personaPopupOpen, setPersonaPopupOpen] = useState(false);
   const [settingsPopupOpen, setSettingsPopupOpen] = useState(false);
   const [providerSettingsOpen, setProviderSettingsOpen] = useState(false);
+  const [tasksOpen, setTasksOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [memoryOpen, setMemoryOpen] = useState(false);
+  const { profile } = useProfile();
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastSpokenRef = useRef<string>("");
   const usedVoiceInputRef = useRef(false);
+
+  // Open onboarding once on first run
+  useEffect(() => {
+    if (!profile.onboarded) setOnboardingOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { preferences, savePreferences } = useUserPreferences();
   const {
@@ -211,6 +228,9 @@ export const Chat = () => {
     setPersonaPopupOpen(false);
     setSettingsPopupOpen(false);
     setProviderSettingsOpen(false);
+    setTasksOpen(false);
+    setNotesOpen(false);
+    setMemoryOpen(false);
   }, []);
 
   useKeyboardShortcuts({
@@ -261,6 +281,10 @@ export const Chat = () => {
         modelLabel={activeSettings?.model}
         isReady={isReady}
         onOpenProviders={() => setProviderSettingsOpen(true)}
+        onOpenTasks={() => setTasksOpen(true)}
+        onOpenNotes={() => setNotesOpen(true)}
+        onOpenMemory={() => setMemoryOpen(true)}
+        onOpenBriefing={handleNewConversation}
       />
 
       <main
@@ -325,8 +349,14 @@ export const Chat = () => {
                   </motion.button>
                 )}
 
-                <div className="flex flex-wrap justify-center gap-2 w-full">
-                  {["Write a poem", "Explain something", "Brainstorm ideas"].map((s, i) => (
+                <DailyBriefing
+                  greeting={greeting}
+                  onOpenTasks={() => setTasksOpen(true)}
+                  onSuggest={(p) => handleSendMessage(p)}
+                />
+
+                <div className="flex flex-wrap justify-center gap-2 w-full mt-6">
+                  {["What's on my plate today?", "Help me plan this week", "Brainstorm ideas with me"].map((s, i) => (
                     <motion.button
                       key={s}
                       initial={{ opacity: 0, y: 10 }}
@@ -433,6 +463,11 @@ export const Chat = () => {
         isOpen={providerSettingsOpen}
         onClose={() => setProviderSettingsOpen(false)}
       />
+
+      <TasksPanel isOpen={tasksOpen} onClose={() => setTasksOpen(false)} />
+      <NotesPanel isOpen={notesOpen} onClose={() => setNotesOpen(false)} />
+      <MemoryPanel isOpen={memoryOpen} onClose={() => setMemoryOpen(false)} />
+      <OnboardingWizard isOpen={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
     </div>
   );
 };
