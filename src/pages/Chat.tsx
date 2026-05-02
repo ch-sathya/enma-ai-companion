@@ -71,9 +71,20 @@ export const Chat = () => {
   const [personaPopupOpen, setPersonaPopupOpen] = useState(false);
   const [settingsPopupOpen, setSettingsPopupOpen] = useState(false);
   const [providerSettingsOpen, setProviderSettingsOpen] = useState(false);
+  const [tasksOpen, setTasksOpen] = useState(false);
+  const [notesOpen, setNotesOpen] = useState(false);
+  const [memoryOpen, setMemoryOpen] = useState(false);
+  const { profile } = useProfile();
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const lastSpokenRef = useRef<string>("");
   const usedVoiceInputRef = useRef(false);
+
+  // Open onboarding once on first run
+  useEffect(() => {
+    if (!profile.onboarded) setOnboardingOpen(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const { preferences, savePreferences } = useUserPreferences();
   const {
