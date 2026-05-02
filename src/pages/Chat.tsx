@@ -17,10 +17,16 @@ import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { useVoice } from "@/hooks/useVoice";
 import { useUserPreferences } from "@/hooks/useUserPreferences";
 import { useProviders } from "@/hooks/useProviders";
+import { useProfile } from "@/hooks/useProfile";
 import { getPersonaById, Persona } from "@/data/personas";
 import { Settings, Sparkles, KeyRound } from "lucide-react";
 import { MessageSkeleton } from "@/components/MessageSkeleton";
 import { AttachedFile } from "@/components/FileAttachment";
+import { TasksPanel } from "@/components/assistant/TasksPanel";
+import { NotesPanel } from "@/components/assistant/NotesPanel";
+import { MemoryPanel } from "@/components/assistant/MemoryPanel";
+import { OnboardingWizard } from "@/components/assistant/OnboardingWizard";
+import { DailyBriefing } from "@/components/assistant/DailyBriefing";
 
 interface ChatSettings {
   model: string;
@@ -34,7 +40,7 @@ const SETTINGS_KEY = "enma-chat-settings";
 
 const DEFAULT_SETTINGS: ChatSettings = {
   model: "default",
-  personaId: "general",
+  personaId: "assistant",
   temperature: 0.7,
   topP: 0.9,
   maxTokens: 2048,
