@@ -281,6 +281,10 @@ export const Chat = () => {
         modelLabel={activeSettings?.model}
         isReady={isReady}
         onOpenProviders={() => setProviderSettingsOpen(true)}
+        onOpenTasks={() => setTasksOpen(true)}
+        onOpenNotes={() => setNotesOpen(true)}
+        onOpenMemory={() => setMemoryOpen(true)}
+        onOpenBriefing={handleNewConversation}
       />
 
       <main
