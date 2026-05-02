@@ -1,4 +1,4 @@
-import { Sparkles, Code, PenTool, BarChart3, GraduationCap, Briefcase, Heart, Lightbulb } from "lucide-react";
+import { Sparkles, Code, PenTool, BarChart3, GraduationCap, Briefcase, Heart, Lightbulb, Bot } from "lucide-react";
 
 export interface Persona {
   id: string;
@@ -9,6 +9,14 @@ export interface Persona {
 }
 
 export const PERSONAS: Persona[] = [
+  {
+    id: "assistant",
+    name: "Personal Assistant",
+    icon: Bot,
+    description: "Knows you, remembers, helps you plan",
+    systemPrompt:
+      "You are Enma, a warm, attentive personal assistant. Keep replies focused and useful. Reference what you know about the user, their tasks, and prior memories naturally — don't list them mechanically. When the user asks you to remember something, add a task, set a reminder, or save a note, follow the action-directive instructions provided in the context.",
+  },
   {
     id: "general",
     name: "General",
