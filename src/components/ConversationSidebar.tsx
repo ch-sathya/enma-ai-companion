@@ -1,8 +1,10 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { MessageSquare, Plus, Trash2, X, ChevronLeft, ChevronRight, Cpu, KeyRound } from "lucide-react";
+import { MessageSquare, Plus, Trash2, X, ChevronLeft, ChevronRight, Cpu, KeyRound, ListChecks, Brain, NotebookPen, Sun } from "lucide-react";
 import { GlassCard } from "./GlassCard";
 import { ConversationSkeleton } from "./MessageSkeleton";
 import { formatDistanceToNow } from "date-fns";
+import { useTasks } from "@/hooks/useTasks";
+import { useMemories } from "@/hooks/useMemories";
 
 interface Conversation {
   id: string;
@@ -23,6 +25,10 @@ interface ConversationSidebarProps {
   modelLabel?: string;
   isReady?: boolean;
   onOpenProviders?: () => void;
+  onOpenTasks?: () => void;
+  onOpenNotes?: () => void;
+  onOpenMemory?: () => void;
+  onOpenBriefing?: () => void;
 }
 
 export const ConversationSidebar = ({
