@@ -349,8 +349,14 @@ export const Chat = () => {
                   </motion.button>
                 )}
 
-                <div className="flex flex-wrap justify-center gap-2 w-full">
-                  {["Write a poem", "Explain something", "Brainstorm ideas"].map((s, i) => (
+                <DailyBriefing
+                  greeting={greeting}
+                  onOpenTasks={() => setTasksOpen(true)}
+                  onSuggest={(p) => handleSendMessage(p)}
+                />
+
+                <div className="flex flex-wrap justify-center gap-2 w-full mt-6">
+                  {["What's on my plate today?", "Help me plan this week", "Brainstorm ideas with me"].map((s, i) => (
                     <motion.button
                       key={s}
                       initial={{ opacity: 0, y: 10 }}
