@@ -463,6 +463,11 @@ export const Chat = () => {
         isOpen={providerSettingsOpen}
         onClose={() => setProviderSettingsOpen(false)}
       />
+
+      <TasksPanel isOpen={tasksOpen} onClose={() => setTasksOpen(false)} />
+      <NotesPanel isOpen={notesOpen} onClose={() => setNotesOpen(false)} />
+      <MemoryPanel isOpen={memoryOpen} onClose={() => setMemoryOpen(false)} />
+      <OnboardingWizard isOpen={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
     </div>
   );
 };
