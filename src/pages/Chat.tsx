@@ -228,6 +228,9 @@ export const Chat = () => {
     setPersonaPopupOpen(false);
     setSettingsPopupOpen(false);
     setProviderSettingsOpen(false);
+    setTasksOpen(false);
+    setNotesOpen(false);
+    setMemoryOpen(false);
   }, []);
 
   useKeyboardShortcuts({
