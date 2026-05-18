@@ -204,6 +204,9 @@ export const SettingsPopup = ({
                   </p>
                 </div>
 
+                {/* Theme engine */}
+                <ThemePanel />
+
                 {/* Voice Settings */}
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
