@@ -27,6 +27,8 @@ import { NotesPanel } from "@/components/assistant/NotesPanel";
 import { MemoryPanel } from "@/components/assistant/MemoryPanel";
 import { OnboardingWizard } from "@/components/assistant/OnboardingWizard";
 import { DailyBriefing } from "@/components/assistant/DailyBriefing";
+import { VoiceOrb, useMicLevel } from "@/components/VoiceOrb";
+import { VoiceWaveform } from "@/components/VoiceWaveform";
 
 interface ChatSettings {
   model: string;
@@ -430,6 +432,9 @@ export const Chat = () => {
             />
           </div>
         </div>
+
+        {/* Floating voice HUD — visible only while listening or speaking */}
+        <VoiceHud listening={voice.isListening} speaking={voice.isSpeaking} />
       </main>
 
       <ModelPopup
