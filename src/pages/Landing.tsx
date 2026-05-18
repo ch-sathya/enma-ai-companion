@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ArrowRight, Sparkles } from "lucide-react";
 import { EnmaLogo } from "@/components/EnmaLogo";
 import { GlassCard } from "@/components/GlassCard";
+import { EnmaOrb } from "@/components/EnmaOrb";
 const features = [{
   title: "Any Model",
   description: "OpenAI, Claude, Gemini, Groq, Ollama"
@@ -47,18 +48,25 @@ export const Landing = () => {
     }} transition={{
       duration: 0.8
     }} className="text-center z-10 max-w-3xl mx-auto">
-        {/* Logo - Vertical centered layout */}
-        <motion.div initial={{
-        opacity: 0,
-        scale: 0.9
-      }} animate={{
-        opacity: 1,
-        scale: 1
-      }} transition={{
-        delay: 0.1,
-        duration: 0.8
-      }} className="flex justify-center mb-8">
-          <EnmaLogo size="xl" centered vertical asLink={false} glow />
+        {/* 3D Orb hero */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.85 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ delay: 0.1, duration: 1.2, ease: [0.16, 1, 0.3, 1] }}
+          className="relative mx-auto mb-6 h-[280px] w-[280px] md:h-[360px] md:w-[360px]"
+        >
+          <EnmaOrb className="absolute inset-0" />
+          <div className="pointer-events-none absolute inset-0 rounded-full bg-gradient-radial from-transparent via-transparent to-background/40" />
+        </motion.div>
+
+        {/* Wordmark */}
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5, duration: 0.8 }}
+          className="flex justify-center mb-6"
+        >
+          <EnmaLogo size="lg" centered vertical asLink={false} glow />
         </motion.div>
 
         {/* Tagline */}
