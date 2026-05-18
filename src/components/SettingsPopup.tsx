@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { GlassCard } from "@/components/GlassCard";
+import { ThemePanel } from "@/components/ThemePanel";
 import { UserPreferences } from "@/hooks/useUserPreferences";
 
 interface SettingsPopupProps {
@@ -202,6 +203,9 @@ export const SettingsPopup = ({
                     Enma will address you by this name in conversations
                   </p>
                 </div>
+
+                {/* Theme engine */}
+                <ThemePanel />
 
                 {/* Voice Settings */}
                 <div className="space-y-3">

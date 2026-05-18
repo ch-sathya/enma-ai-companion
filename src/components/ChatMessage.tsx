@@ -197,6 +197,12 @@ const ChatMessageComponent = ({
               >
                 {content}
               </ReactMarkdown>
+              {isStreaming && content && (
+                <span
+                  aria-hidden
+                  className="inline-block w-[6px] h-[1.05em] -mb-[2px] ml-0.5 align-middle rounded-[1px] bg-[hsl(var(--enma-purple-glow))] animate-pulse shadow-[0_0_10px_hsl(var(--enma-purple-glow)/0.6)]"
+                />
+              )}
             </div>
           )}
         </div>

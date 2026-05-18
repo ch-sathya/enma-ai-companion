@@ -27,6 +27,8 @@ import { NotesPanel } from "@/components/assistant/NotesPanel";
 import { MemoryPanel } from "@/components/assistant/MemoryPanel";
 import { OnboardingWizard } from "@/components/assistant/OnboardingWizard";
 import { DailyBriefing } from "@/components/assistant/DailyBriefing";
+import { VoiceOrb, useMicLevel } from "@/components/VoiceOrb";
+import { VoiceWaveform } from "@/components/VoiceWaveform";
 
 interface ChatSettings {
   model: string;
@@ -62,6 +64,33 @@ const saveSettingsToStorage = (settings: ChatSettings) => {
   } catch {
     // ignore
   }
+};
+
+const VoiceHud = ({ listening, speaking }: { listening: boolean; speaking: boolean }) => {
+  const active = listening || speaking;
+  const level = useMicLevel(listening);
+  const displayLevel = speaking ? 0.55 + Math.sin(Date.now() / 180) * 0.15 : level;
+  if (!active) return null;
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: 24, scale: 0.9 }}
+      transition={{ type: "spring", stiffness: 220, damping: 22 }}
+      className="pointer-events-none fixed bottom-28 right-6 z-30 flex flex-col items-center gap-2"
+    >
+      <div className="relative h-28 w-28">
+        <div className="absolute inset-0 rounded-full bg-[hsl(var(--enma-purple)/0.18)] blur-2xl" />
+        <VoiceOrb className="absolute inset-0" active={active} speaking={speaking} level={displayLevel} />
+      </div>
+      <div className="glass-subtle rounded-full px-3 py-1.5 flex items-center gap-2">
+        <span className="text-[10px] uppercase tracking-[0.15em] text-muted-foreground">
+          {speaking ? "Speaking" : "Listening"}
+        </span>
+        <VoiceWaveform level={displayLevel} active={active} bars={16} className="h-5 w-20" />
+      </div>
+    </motion.div>
+  );
 };
 
 export const Chat = () => {
@@ -430,6 +459,9 @@ export const Chat = () => {
             />
           </div>
         </div>
+
+        {/* Floating voice HUD — visible only while listening or speaking */}
+        <VoiceHud listening={voice.isListening} speaking={voice.isSpeaking} />
       </main>
 
       <ModelPopup
